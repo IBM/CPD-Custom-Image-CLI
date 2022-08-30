@@ -14,7 +14,7 @@ It streamlines the process of creating a custom image for Cloud Pak for Data run
 
 *The support for Watson Machine Learning is not fully implemented but should be there soon. Stay tunned!*
 
-**Doc**: [TBD]
+**Doc**: https://ibm.github.io/CPD-Custom-Image-CLI/
 
 ## Important notes
 
