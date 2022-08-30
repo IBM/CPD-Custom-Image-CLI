@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting Started: Create Custom Images for Watson Studio (Cloud Pak for Data) &mdash; custom-image-cli 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Retrieve or Register Container Registry Secrets" href="cluster_secrets.html" />
+    <link rel="prev" title="Custom Image CLI for Runtimes in Cloud Pak for Data" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> custom-image-cli
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started: Watson Studio</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#preparation">Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#access-to-docker-and-container-registries">Access to docker and container registries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#access-to-cloud-pak-for-data-and-or-openshift-as-admin">Access to Cloud Pak for Data and/or OpenShift as admin</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#step-1-get-base-image-names-for-target-watson-studio-runtimes">Step 1: Get Base Image Names for Target Watson Studio Runtimes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-2-build-and-push-the-custom-image-s">Step 2. Build and push the custom image(s)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#login-to-both-container-registry">1. Login to both container registry</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cpd-base-image-container-registry">1.1 CPD base image container registry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#custom-image-container-registry">1.2 custom image container registry</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#run-cli-command">2. Run CLI command</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#step-3-register-in-cpd-service">Step 3. Register in CPD Service</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#python-jupyter">3.1 Python Jupyter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rstudio">3.2 Rstudio</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#step-4-test-new-environment">Step 4. Test New Environment</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cluster_secrets.html">Retrieve or Register Container Registry Secrets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Quick Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cheat_sheet.html">Cheat Sheet</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">custom-image-cli</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Getting Started: Create Custom Images for Watson Studio (Cloud Pak for Data)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/getting_started.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="getting-started-create-custom-images-for-watson-studio-cloud-pak-for-data">
+<h1>Getting Started: Create Custom Images for Watson Studio (Cloud Pak for Data)<a class="headerlink" href="#getting-started-create-custom-images-for-watson-studio-cloud-pak-for-data" title="Permalink to this heading"></a></h1>
+<div class="section" id="preparation">
+<h2>Preparation<a class="headerlink" href="#preparation" title="Permalink to this heading"></a></h2>
+<div class="section" id="access-to-docker-and-container-registries">
+<h3>Access to docker and container registries<a class="headerlink" href="#access-to-docker-and-container-registries" title="Permalink to this heading"></a></h3>
+<p>Make sure that you</p>
+<ul>
+<li><p>have <a class="reference external" href="https://www.docker.com/get-started/">docker</a> installed in your environment</p>
+<ul class="simple">
+<li><p>check and confirm that in your terminal, you are able to run docker commands by typing:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="o">--</span><span class="n">help</span>
+</pre></div>
+</div>
+</li>
+<li><p>have the username and password to <code class="docutils literal notranslate"><span class="pre">cp.icr.io</span></code>, the container registry for base images (see <a class="reference internal" href="cluster_secrets.html"><span class="doc std std-doc">this page</span></a> if you do not know it)</p></li>
+<li><p>have the username and password to your container registry for custom images</p></li>
+<li><p>configured the Cloud Pak for Data cluster to access your container registry for custom images (see <a class="reference internal" href="cluster_secrets.html"><span class="doc std std-doc">this page</span></a> if you have not done it yet)</p></li>
+</ul>
+</div>
+<div class="section" id="access-to-cloud-pak-for-data-and-or-openshift-as-admin">
+<h3>Access to Cloud Pak for Data and/or OpenShift as admin<a class="headerlink" href="#access-to-cloud-pak-for-data-and-or-openshift-as-admin" title="Permalink to this heading"></a></h3>
+<p>Everything is easier if you are <strong>an admin of the Cloud Pak for Data cluster</strong> you want to add a custom image to, with <strong>access to the OpenShift backend</strong>. If not, you may need to work with your Cloud Pak for Data admin and/or OpenShift admin to complete the whole process.</p>
+<p>The access needed for each step will be specified separately.</p>
+</div>
+</div>
+<div class="section" id="step-1-get-base-image-names-for-target-watson-studio-runtimes">
+<h2>Step 1: Get Base Image Names for Target Watson Studio Runtimes<a class="headerlink" href="#step-1-get-base-image-names-for-target-watson-studio-runtimes" title="Permalink to this heading"></a></h2>
+<p>All custom images to be used in Watson Studio need to be based on the default runtime images.</p>
+<p>Access role required:</p>
+<ul class="simple">
+<li><p><strong>Cloud Pak for Data admin role</strong></p></li>
+</ul>
+<p>Run the following commands to set up your credentials to your Cloud Pak for Data cluster:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">BASE_URL</span><span class="o">=</span>&lt;your cpd link&gt;
+<span class="nb">export</span> <span class="nv">USERNAME</span><span class="o">=</span>&lt;your username&gt;
+<span class="nb">export</span> <span class="nv">APIKEY</span><span class="o">=</span>&lt;your apikey&gt;
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">BASE_URL</span><span class="o">=</span>https://mycpd.com
+<span class="nb">export</span> <span class="nv">USERNAME</span><span class="o">=</span>wendy
+<span class="nb">export</span> <span class="nv">APIKEY</span><span class="o">=</span>ziE9KHmhKy2aHemKLeXa2CjTXpJbse8ZKjzoxH7d
+</pre></div>
+</div>
+<p>(The above is a dummy example.)</p>
+<p>Now you can run the following commands to list the base image names you are looking for:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py default list --cpu <span class="c1"># python jupyter environments, non-gpu</span>
+python cli_ws_image.py default list --gpu <span class="c1"># python jupyter environments, gpu</span>
+python cli_ws_image.py default list -a <span class="c1"># python jupyter environments, non-gpu + gpu</span>
+python cli_ws_image.py default list --rstudio <span class="c1"># rstudio environments</span>
+</pre></div>
+</div>
+<p>If your Cloud Pak for Data is not the latest version, you need to specify which version it is on, because each Cloud Pak for Data version corresponds to a different set of base images that might have dependency on this specific version and cannot work properly on an older or newer version. This can be done by argument <code class="docutils literal notranslate"><span class="pre">--cpd-version</span> <span class="pre">&lt;version&gt;</span></code>. For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py default list --cpu --cpd-version <span class="m">4</span>.0.6
+</pre></div>
+</div>
+<p>If the output looks good, you can export the base image names into a text file by adding an argument <code class="docutils literal notranslate"><span class="pre">--export-fn</span> <span class="pre">&lt;filename&gt;</span></code>. For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py default list --cpu --cpd-version <span class="m">4</span>.0.6 --export-fn base_images_nongpu_406.txt
+</pre></div>
+</div>
+<p>You may use the overwrite flag <code class="docutils literal notranslate"><span class="pre">--overwrite</span></code> (or <code class="docutils literal notranslate"><span class="pre">-o</span></code>) to overwrite the file if it exists.</p>
+<p>This exported text file is needed in the build step. You can of course create this text file of base image names manually.</p>
+</div>
+<div class="section" id="step-2-build-and-push-the-custom-image-s">
+<h2>Step 2. Build and push the custom image(s)<a class="headerlink" href="#step-2-build-and-push-the-custom-image-s" title="Permalink to this heading"></a></h2>
+<p>No matter how many base images you need to build a custom image for, you only have to run the build command once for each dockerfile.</p>
+<p>What does it mean?</p>
+<p>You may have created a dockerfile that you want to apply for both python 3.8 and python 3.9 base image. In this case, you can manually edit the base image list to keep only the image names you want to build a custom image for. The build command will loop through all the base image names in the list, build one custom image for each base image using the same dockerfile provided, and push all of them to the target container registery.</p>
+<p>Access required:</p>
+<ul class="simple">
+<li><p><strong>username and password to the container registry for base images (<code class="docutils literal notranslate"><span class="pre">cp.icr.io</span></code>)</strong></p></li>
+<li><p><strong>username and password to your container registry for custom images</strong></p></li>
+</ul>
+<div class="section" id="login-to-both-container-registry">
+<h3>1. Login to both container registry<a class="headerlink" href="#login-to-both-container-registry" title="Permalink to this heading"></a></h3>
+<p>Before running the build command, you need to authenticate to both the CPD base image container registry as well as your custom image container registry.</p>
+<div class="section" id="cpd-base-image-container-registry">
+<h4>1.1 CPD base image container registry<a class="headerlink" href="#cpd-base-image-container-registry" title="Permalink to this heading"></a></h4>
+<p>To login to <code class="docutils literal notranslate"><span class="pre">cp.icr.io</span></code>, run the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker login cp.icr.io --username &lt;username&gt; --password &lt;password&gt;
+</pre></div>
+</div>
+<p>If you do not have it, you will need <strong>openshift access</strong> to extract the credentials (see <a class="reference internal" href="cluster_secrets.html"><span class="doc std std-doc">this page</span></a>) or ask your openshift admin to do it.</p>
+</div>
+<div class="section" id="custom-image-container-registry">
+<h4>1.2 custom image container registry<a class="headerlink" href="#custom-image-container-registry" title="Permalink to this heading"></a></h4>
+<p>To login to the container registry for custom images, you can run a similar <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">login</span></code> command. If you are usng IBM Cloud Container Registry for this purpose, you can also use the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ibmcloud login -g &lt;resource-group&gt; --apikey &lt;iam-apikey&gt; <span class="o">&amp;&amp;</span> ibmcloud cr login
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="run-cli-command">
+<h3>2. Run CLI command<a class="headerlink" href="#run-cli-command" title="Permalink to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">custom</span> <span class="pre">build</span></code> command builds the custom images and pushes each of them to the target container registry for custom images.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --registry-url &lt;registry-for-custom-image&gt; --registry-namespace &lt;namespace&gt; --dir-dockerfile &lt;directory-of-dockerfile&gt; --base-image-list &lt;path-to-base-image-list&gt; --custom-image-name-pattern &lt;pattern&gt;
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --registry-url us.icr.io --registry-namespace cpd-custom-image --dir-dockerfile ../custom-image --base-image-list base_images_nongpu_408.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-ws-applications
+</pre></div>
+</div>
+<p>Note that:</p>
+<ul class="simple">
+<li><p><strong>base-image-list</strong>: this is the path to the file after switching to <strong>dir-dockerfile</strong>, not relative to where you run the command</p></li>
+<li><p><strong>custom-image-name-pattern</strong>: this is a name pattern, where <code class="docutils literal notranslate"><span class="pre">image_name</span></code> can be optionally used to refer to the original/base image name</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="step-3-register-in-cpd-service">
+<h2>Step 3. Register in CPD Service<a class="headerlink" href="#step-3-register-in-cpd-service" title="Permalink to this heading"></a></h2>
+<p>In order to use the custom image, the target service in Cloud Pak for Data needs to be aware of this image.</p>
+<p>For Watson Studio, this involves:</p>
+<ul class="simple">
+<li><p>a new or updated runtime config</p></li>
+</ul>
+<p>For Watson Machine Learning, this involves:</p>
+<ul class="simple">
+<li><p>a new or updated software specification</p></li>
+<li><p>a new or updated runtime config</p></li>
+</ul>
+<p>Access role required:</p>
+<ul class="simple">
+<li><p><strong>Cloud Pak for Data admin role</strong></p></li>
+</ul>
+<p>The following command registers ONE custom image in Watson Studio:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register
+</pre></div>
+</div>
+<p>If you have multiple custom images, you may need to run the command for multiple times, unless you created one custom image to be registered for <strong>each available Python Jupyter runtime</strong> (there is only 1 Rstudio runtime as of 4.0.x so you won’t encounter this for Rstudio).</p>
+<p>Note that:</p>
+<ul class="simple">
+<li><p>You may use the flag <code class="docutils literal notranslate"><span class="pre">--dry-run</span></code> to test the command and assess the generated json file, without really adding it to Watson Studio’s runtime definitions.</p></li>
+<li><p>Use argument <code class="docutils literal notranslate"><span class="pre">--cpd-version</span></code> or <code class="docutils literal notranslate"><span class="pre">-v</span></code> if the Cloud Pak for Data cluster is not on the latest version. This information is used to get all the candidate runtime definitions for this version.</p></li>
+<li><p>Use argument <code class="docutils literal notranslate"><span class="pre">--python-version</span></code> or <code class="docutils literal notranslate"><span class="pre">-py</span></code> if there are multiple candidate runtime definitions for this Cloud Pak for Data version (usually each corresponds to a different python version), and you want to register a custom image for only a specific python version.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--config-filename-pattern</span></code> or <code class="docutils literal notranslate"><span class="pre">-c</span></code>: used to provide a filename pattern for each final config file (one for each final candidate runtime definitions). By default it is <code class="docutils literal notranslate"><span class="pre">custom-{filename}</span></code>, where <code class="docutils literal notranslate"><span class="pre">{filename}</span></code> refers to the original config filename. Note that <strong><code class="docutils literal notranslate"><span class="pre">{filename}</span></code> has to be at the end of the pattern</strong> (do not add anything after it).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--display-name-pattern</span></code> or <code class="docutils literal notranslate"><span class="pre">d</span></code>: used to provide a display name pattern in each final config file. By default it is <code class="docutils literal notranslate"><span class="pre">{display_name}</span> <span class="pre">(custom)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--image-name-pattern</span></code> or <code class="docutils literal notranslate"><span class="pre">-i</span></code>: used to provide an image name pattern for each custom image. By default it is <code class="docutils literal notranslate"><span class="pre">us.icr.io/custom-image/{image_name}-custom:2</span></code>, where <code class="docutils literal notranslate"><span class="pre">{image_name}</span></code> refers to the original image name of the base image, similar to the previous commands.</p></li>
+</ul>
+<div class="section" id="python-jupyter">
+<h3>3.1 Python Jupyter<a class="headerlink" href="#python-jupyter" title="Permalink to this heading"></a></h3>
+<p>Special arguments to use:</p>
+<ul class="simple">
+<li><p>You need to specify one of <code class="docutils literal notranslate"><span class="pre">--jupyter</span></code> (to generate config for jupyter notebook runtimes only), <code class="docutils literal notranslate"><span class="pre">--jupyterlab</span></code> (to generate config for jupyterlab runtimes only), or <code class="docutils literal notranslate"><span class="pre">--jupyter-all</span></code> (to generate config for both jupyter notebook and jupyterlab runtimes).</p></li>
+</ul>
+<p>The command looks like the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --jupyter-all -c &lt;config-filename-pattern&gt; -d &lt;display-name-pattern&gt; -i &lt;image-name-pattern&gt;
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --jupyter-all -c ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8
+</pre></div>
+</div>
+</div>
+<div class="section" id="rstudio">
+<h3>3.2 Rstudio<a class="headerlink" href="#rstudio" title="Permalink to this heading"></a></h3>
+<p>Special arguments to use:</p>
+<ul class="simple">
+<li><p>You need to specify <code class="docutils literal notranslate"><span class="pre">--rstudio</span></code>.</p></li>
+</ul>
+<p>The command looks like the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --rstudio -c &lt;config-filename-pattern&gt; -d &lt;display-name-pattern&gt; -i &lt;image-name-pattern&gt;
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --rstudio -c custom-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (custom)&quot;</span> -i us.icr.io/cpd-custom-image/<span class="o">{</span>image_name<span class="o">}</span>-custom:23 -v <span class="m">4</span>.0.8
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="step-4-test-new-environment">
+<h2>Step 4. Test New Environment<a class="headerlink" href="#step-4-test-new-environment" title="Permalink to this heading"></a></h2>
+<p>Now you can go to the Cloud Pak for Data cluster, enter a Watson Studio project where your new environment is allowed to be used (e.g., JupyterLab environment is only available in a Git-connected project).</p>
+<p>Access role required:</p>
+<ul class="simple">
+<li><p><strong>None</strong></p></li>
+</ul>
+<p>Click on the <strong>New environment definition</strong> button:
+<img alt="screenshot" src="_images/getting_started_step4_1.png" /></p>
+<p>Then from the dropdown list, you should be able to find and choose the custom runtime you just registered for the custom image:
+<img alt="screenshot" src="_images/getting_started_step4_2.png" /></p>
+<p>Once you created a new environment definition using the custom runtime, you can test it in the following way.</p>
+<ul class="simple">
+<li><p>For JupyterLab or Rstudio environments, click <strong>Launch IDE</strong> -&gt; <strong>JupyterLab</strong> or <strong>Rstudio</strong>, then choose the new environment definition from the dropdown list.
+<img alt="screenshot" src="_images/getting_started_step4_3.png" />
+<img alt="screenshot" src="_images/getting_started_step4_4.png" /></p></li>
+<li><p>For Jupyter Notebook environments, open an exsiting notebook with this new environment definition, or click on this <strong>New notebook</strong> button to open a new notebook using this definition.
+<img alt="screenshot" src="_images/getting_started_step4_5.png" /></p></li>
+</ul>
+<p><strong>It can take a while for the environment to start</strong>, because the image needs to be pulled to the worker node. If you have openshift access, you will be able to see the pod events to track the progress.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Custom Image CLI for Runtimes in Cloud Pak for Data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cluster_secrets.html" class="btn btn-neutral float-right" title="Retrieve or Register Container Registry Secrets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Wendy Wang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

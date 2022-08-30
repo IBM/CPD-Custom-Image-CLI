@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cheat Sheet &mdash; custom-image-cli 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Retrieve or Register Container Registry Secrets" href="cluster_secrets.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> custom-image-cli
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started: Watson Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster_secrets.html">Retrieve or Register Container Registry Secrets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Quick Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Cheat Sheet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#preparation-specify-if-not-in-watson-studio">0. Preparation: specify if not in watson studio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#get-base-image-names">1. Get base image names</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#latest-cpd-version">latest cpd version</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historical-cpd-version">historical cpd version</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#build-and-push-custom-images">2. Build and push custom images</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#register-custom-images-in-watson-studio">3. Register custom images in watson studio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#other-commnds">4. Other commnds</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#list-custom-configs">4.1 list custom configs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#view-a-specific-config">4.2 view a specific config</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">custom-image-cli</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Cheat Sheet</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/cheat_sheet.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="cheat-sheet">
+<h1>Cheat Sheet<a class="headerlink" href="#cheat-sheet" title="Permalink to this heading"></a></h1>
+<div class="section" id="preparation-specify-if-not-in-watson-studio">
+<h2>0. Preparation: specify if not in watson studio<a class="headerlink" href="#preparation-specify-if-not-in-watson-studio" title="Permalink to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">BASE_URL</span><span class="o">=</span>******
+<span class="nb">export</span> <span class="nv">USERNAME</span><span class="o">=</span>******
+<span class="nb">export</span> <span class="nv">APIKEY</span><span class="o">=</span>******
+</pre></div>
+</div>
+</div>
+<div class="section" id="get-base-image-names">
+<h2>1. Get base image names<a class="headerlink" href="#get-base-image-names" title="Permalink to this heading"></a></h2>
+<div class="section" id="latest-cpd-version">
+<h3>latest cpd version<a class="headerlink" href="#latest-cpd-version" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py default list --cpu
+python cli_ws_image.py default list --service ws --cpu <span class="c1"># default service is ws</span>
+python cli_ws_image.py default list --service wml --cpu
+
+python cli_ws_image.py default list --gpu
+python cli_ws_image.py default list -a
+python cli_ws_image.py default list --rstudio
+
+python cli_ws_image.py default list --cpu --export-fn base_images_nongpu_408.txt -o
+python cli_ws_image.py default list --cpu --export-fn base_images_nongpu_408.txt
+
+python cli_ws_image.py default list --rstudio --export-fn base_images_rstudio_407.txt
+</pre></div>
+</div>
+</div>
+<div class="section" id="historical-cpd-version">
+<h3>historical cpd version<a class="headerlink" href="#historical-cpd-version" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py default list -a --cpd-version <span class="m">4</span>.0.6
+
+python cli_ws_image.py default list --rstudio --cpd-version <span class="m">4</span>.0.7 --export-fn base_images_rstudio_407.txt
+python cli_ws_image.py default list --rstudio --cpd-version <span class="m">4</span>.0.8 --export-fn base_images_rstudio_408.txt
+
+python cli_ws_image.py default list --service wml --cpu --cpd-version <span class="m">4</span>.0.7 --export-fn base_images_wmlpython_407.txt
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="build-and-push-custom-images">
+<h2>2. Build and push custom images<a class="headerlink" href="#build-and-push-custom-images" title="Permalink to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --registry-url us.icr.io --registry-namespace custom-image-cli-test --dir-dockerfile ../custom-image --base-image-list base_images_nongpu_408.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-ws-applications
+
+python cli_ws_image.py custom build --registry-url us.icr.io --registry-namespace cpd-custom-image --dir-dockerfile . --base-image-list base_images_wmlpython_407.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-custom
+</pre></div>
+</div>
+</div>
+<div class="section" id="register-custom-images-in-watson-studio">
+<h2>3. Register custom images in watson studio<a class="headerlink" href="#register-custom-images-in-watson-studio" title="Permalink to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --jupyter --dry-run
+python cli_ws_image.py custom register --jupyterlab --dry-run
+python cli_ws_image.py custom register --jupyter-all --dry-run
+python cli_ws_image.py custom register --jupyter-all -py <span class="m">3</span>.8 -v <span class="m">4</span>.0.6 --dry-run
+
+python cli_ws_image.py custom register --jupyter-all -c ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8 --dry-run
+python cli_ws_image.py custom register --gpu --jupyter-all -c ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8 --dry-run
+
+python cli_ws_image.py custom register --rstudio -c custom-407-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (custom)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-custom:16 -v <span class="m">4</span>.0.7 --dry-run
+</pre></div>
+</div>
+</div>
+<div class="section" id="other-commnds">
+<h2>4. Other commnds<a class="headerlink" href="#other-commnds" title="Permalink to this heading"></a></h2>
+<div class="section" id="list-custom-configs">
+<h3>4.1 list custom configs<a class="headerlink" href="#list-custom-configs" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom list -c ws-applications-<span class="o">{</span>filename<span class="o">}</span>
+python cli_ws_image.py custom list -c ws-applications-<span class="o">{</span>filename<span class="o">}</span> -v <span class="m">4</span>.0.6
+</pre></div>
+</div>
+</div>
+<div class="section" id="view-a-specific-config">
+<h3>4.2 view a specific config<a class="headerlink" href="#view-a-specific-config" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom view --name ws-applications-408-jupyter-lab-py39-server.json
+python cli_ws_image.py custom view --name ws-applications-408-jupyter-lab-py39-server.json --image-name
+
+python cli_ws_image.py custom view --name ws-applications-jupyter-py39-server.json <span class="c1"># it actually works for default config too</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cluster_secrets.html" class="btn btn-neutral float-left" title="Retrieve or Register Container Registry Secrets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Wendy Wang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
