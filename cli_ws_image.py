@@ -217,17 +217,22 @@ def view(name, image_name):
     
 
 @custom.command()
-@click.option('--registry-url',type=str,default='us.icr.io',help='registry url to store the custom image')
-@click.option('--registry-namespace',type=str,default='custom-image',help='registry namespace to store the custom image')
 @click.option('--dir-dockerfile',type=str,default='.',help='directory to the location of the dockerfile')
 @click.option('--base-image-list',type=str,required=True,help='a filename of a text file containing base image names, one at a line')
 @click.option('--custom-image-name-pattern',type=str,default='{image_name}-custom',help='pattern of the custom image name; where the original image name which the custom file is based on is referred to as {image_name}')
 @click.option('--docker-build-args',type=str,default='',help='Other docker build args to attach, for example "--no-cache=true"')
-def build(registry_url, registry_namespace, dir_dockerfile, base_image_list, custom_image_name_pattern, docker_build_args):
+@click.option('--push',is_flag=True,help='whether to include push as well')
+@click.option('--registry-url',type=str,default='us.icr.io',help='registry url to store the custom image')
+@click.option('--registry-namespace',type=str,default='custom-image',help='registry namespace to store the custom image')
+@click.option('--docker-push-args',type=str,default='',help='Other docker push args')
+def build(dir_dockerfile, base_image_list, custom_image_name_pattern, docker_build_args,
+          push, registry_url, registry_namespace, docker_push_args):
     """
-    Build and push the custom image. 
+    Build (and optionally push) the custom images. 
     Note that you may need to run "docker login cp.icr.io" first, to make sure you have configured access to the
     image registry of CPD, from where to download the base image.
+
+    push: if this flag is added, make sure that you have either supplied values to these arguments or the default values are good: --registry-url, --registry-namespace
     """
 
     with open(base_image_list) as f:
@@ -255,12 +260,72 @@ def build(registry_url, registry_namespace, dir_dockerfile, base_image_list, cus
             cmd = f'docker tag {image_name_custom} {registry_url}/{registry_namespace}/{image_name_custom}'
             print(f'Executing command: {cmd}')
             subprocess.run(cmd,shell=True)
-            
-            cmd = f'docker push {registry_url}/{registry_namespace}/{image_name_custom}'
-            print(f'Executing command: {cmd}')
-            subprocess.run(cmd,shell=True)
-            
             print(f'Finished building custom image {image_name_custom}')
+
+            if push:
+                cmd = f'docker push {registry_url}/{registry_namespace}/{image_name_custom} {docker_push_args}'
+                print(f'Executing command: {cmd}')
+                subprocess.run(cmd,shell=True)
+                print(f'Finished pushing custom image as {registry_url}/{registry_namespace}/{image_name_custom}')
+
+
+@custom.command()
+@click.option('--base-image-list',type=str,help='a filename of a text file containing base image names, one at a line')
+@click.option('--custom-image-name-pattern',type=str,default='{image_name}-custom',help='pattern of the custom image name; where the original image name which the custom file is based on is referred to as {image_name}')
+@click.option('--image-name',type=str,help='the image name to push, an alternative to providing a base image list & name pattern')
+@click.option('--registry-url',type=str,default='us.icr.io',help='registry url to store the custom image')
+@click.option('--registry-namespace',type=str,default='custom-image',help='registry namespace to store the custom image')
+@click.option('--docker-push-args',type=str,default='',help='Other docker push args')
+def push(base_image_list, custom_image_name_pattern, image_name,
+        registry_url, registry_namespace, docker_push_args):
+    """
+    Push the custom images. 
+    Note that you may need to run "docker login <your-container-registry>" first, to make sure you have configured access to the
+    image registry for custom images.
+
+    You need to provide either an image name to push (easy for the case to push one single image), or provide 
+    both the base image list and the custom image name pattern from where multiple images can be pushed in batch.
+    """
+
+    if image_name is None:
+        if base_image_list is None and custom_image_name_pattern is None:
+            click.echo(f"{'Error','error'}: you need to provide either --image-name, or both --base-image-list and --custom-image-name-pattern")
+            sys.exit(1)
+
+    if image_name is not None:
+        image_name_custom = image_name
+        print(f'Pushing custom image {image_name_custom}')
+        
+        cmd = f'docker push {registry_url}/{registry_namespace}/{image_name_custom} {docker_push_args}'
+        print(f'Executing command: {cmd}')
+        res = subprocess.run(cmd,shell=True)
+
+        if res.returncode != 0:
+            click.echo(f"{color('FAILED','error')}: return code {res.returncode}. {res}")
+        else:
+            print(f'Finished pushing custom image as {registry_url}/{registry_namespace}/{image_name_custom}')   
+    else:
+        with open(base_image_list) as f:
+            l_base_image = [base_image.replace('\n','') for base_image in f.readlines()]
+
+        for base_image in l_base_image:
+            if '@' in base_image:
+                image_name = base_image.split('@')[0].split('/')[-1] # ws uses @
+            elif ':' in base_image:
+                image_name = base_image.split(':')[0].split('/')[-1] # wml uses :
+            else:
+                image_name = base_image
+            image_name_custom = custom_image_name_pattern.format(image_name=image_name)
+            print(f'Pushing custom image {image_name_custom} based on {image_name}')
+            
+            cmd = f'docker push {registry_url}/{registry_namespace}/{image_name_custom} {docker_push_args}'
+            print(f'Executing command: {cmd}')
+            res = subprocess.run(cmd,shell=True)
+
+            if res.returncode != 0:
+                click.echo(f"{color('FAILED','error')}: return code {res.returncode}. {res}")
+            else:
+                print(f'Finished pushing custom image as {registry_url}/{registry_namespace}/{image_name_custom}')   
 
 
 
