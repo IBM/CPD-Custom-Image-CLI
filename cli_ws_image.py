@@ -30,6 +30,8 @@ BASE_URL = os.getenv('BASE_URL',os.getenv('RUNTIME_ENV_APSX_URL'))
 
 HEADERS_GET = {'authorization':'Bearer {access_token}'}
 
+CPD_VERSION_LATEST = '4.5.1'
+
 VERSION = '1.1'
 
 list_builtin = list
@@ -69,6 +71,10 @@ def list(cpu,gpu,a,rstudio,service,export_fn,export_format,cpd_version,overwrite
     if service not in ['ws','wml']:
         click.echo(f"{color('Error','error')}: The value for argument {color('service','error')} should be one of ['ws', 'wml'].")
         sys.exit(1)
+
+    cpd_version = CPD_VERSION_LATEST if cpd_version is None else cpd_version
+    click.echo(f"{color('cpd_version')} is not specified, using the latest version {color(CPD_VERSION_LATEST)}\n")
+    flag_df_config = False # whether the downloaded df contains runtime config files that need to be processed further, or the images info is already listed
         
     if service == 'wml':
         cpu = True # wml service
@@ -76,30 +82,32 @@ def list(cpu,gpu,a,rstudio,service,export_fn,export_format,cpd_version,overwrite
             click.echo(f"{color('Error','error')}: Service {color('wml','error')} supports python cpu environments for online & batch deployments (which yield a REST API), where only CPU inference is allowed. As a result you cannot specify \"--gpu\" or \"--all\". \nIf you intend to run GPU inference through a notebook/script job deployment in WML space, the underlying environments and all the steps are the same as WS environments, as in this case WML space leverages WS runtimes, so please use \"--service ws\" instead.")
             sys.exit(1)
         df_runtime = download_reference(cpd_version,service)
-        df_runtime['image'] = 'cp.icr.io/cp/cpd/' + df_runtime['Image name|base-image-name'] + ':' + df_runtime['Image version|base-image-version']
-        print(df_runtime)
 
-        if export_fn is not None:
-            if export_format == 'txt':
-                
-                images = df_runtime['image'].values.tolist()
-                
-                if os.path.exists(export_fn):
-                    click.echo(f"Export filename {color(export_fn)} already exists.")
-                    if not overwrite:
-                        click.echo(f"{color('Stopped','error')}")
-                        sys.exit(1)
-                    else:
-                        click.echo(f"Overwriting file {color(export_fn)}...")
-                else:
-                    click.echo(f"Export filename {color(export_fn)} does not exist.")
-                
-                with open(export_fn,'w') as f:
-                    f.write('\n'.join(images))
-                    f.write('\n') # the file needs to end with a new line character for IFS read to get the last element
-                click.echo(f"Base image list written to {color(export_fn,'pass')}")
+        if cpd_version.startswith('4.0.'):
+            df_runtime['image'] = 'cp.icr.io/cp/cpd/' + df_runtime['Image name|base-image-name'] + ':' + df_runtime['Image version|base-image-version']
+            print(df_runtime)
+        else:
+            flag_df_config = True
+            df_runtime = df_runtime[df_runtime['JSON configuration file'].str.contains('-py')]
+            print(df_runtime)
+
+            click.echo(f"\nFetching config files on CPD {color(BASE_URL)}...")
+            fns = df_runtime['JSON configuration file'].tolist()
+            
+            d_config = get_config_files(fns,BASE_URL,USERNAME,APIKEY,USER_ACCESS_TOKEN,HEADERS_GET)
+            
+            if len(d_config) == 0:
+                click.echo(f"\nNo config file. Cannot output base image list.")
+                sys.exit(1)
+                        
+            df = pd.DataFrame({'filename':d_config.keys(),
+                            'image':[config['image'] for config in d_config.values()]})
+            
+            click.echo(f'\nWML config files on CPD {color(BASE_URL)}, selected fields:')
+            print(df)
 
     elif service == 'ws':
+        flag_df_config = True
         if not cpu and not gpu and not a and not rstudio:
             click.echo(f"{color('Error','error')}: Specify at least one flag for runtime type (--cpu, --gpu, -a, --rstudio).")
             sys.exit(1)
@@ -144,7 +152,10 @@ def list(cpu,gpu,a,rstudio,service,export_fn,export_format,cpd_version,overwrite
         click.echo(f'\nWS config files on CPD {color(BASE_URL)}, selected fields:')
         print(df)
         
-        if export_fn is not None:
+        
+    # export
+    if export_fn is not None:
+        if flag_df_config:
             if export_format == 'txt':
                 images = [config['image'] for config in d_config.values()]
                 images = list_builtin(set(images))
@@ -163,6 +174,25 @@ def list(cpu,gpu,a,rstudio,service,export_fn,export_format,cpd_version,overwrite
                     f.write('\n'.join(images))
                     f.write('\n') # the file needs to end with a new line character for IFS read to get the last element
                 click.echo(f"Base image list written to {color(export_fn,'pass')}")
+        else:
+            if export_format == 'txt':
+                images = df_runtime['image'].values.tolist()
+                
+                if os.path.exists(export_fn):
+                    click.echo(f"Export filename {color(export_fn)} already exists.")
+                    if not overwrite:
+                        click.echo(f"{color('Stopped','error')}")
+                        sys.exit(1)
+                    else:
+                        click.echo(f"Overwriting file {color(export_fn)}...")
+                else:
+                    click.echo(f"Export filename {color(export_fn)} does not exist.")
+                
+                with open(export_fn,'w') as f:
+                    f.write('\n'.join(images))
+                    f.write('\n') # the file needs to end with a new line character for IFS read to get the last element
+                click.echo(f"Base image list written to {color(export_fn,'pass')}")
+
 
 # -------- cli group: custom --------
 @cli.group()
@@ -526,72 +556,101 @@ def download_reference(cpd_version,service='ws',rstudio=False):
         sys.exit(1)
 
     if service == 'wml':
-        url_doc = 'https://www.ibm.com/docs/en/cloud-paks/cp-data/4.0?topic=images-downloading-base-image'
-        click.echo(f'Examining doc resources for CPD 4.0 from {color(url_doc)} (same for the latest & historical versions)...')
-        page = requests.get(url_doc)
-        dfs = pd.read_html(page.text.replace('<br>','|'))
-        df_runtime = dfs[0]
-        latest_version = df_runtime['CPD patch version'].iloc[0]
+        if cpd_version.startswith('4.0.'):
+            url_doc = 'https://www.ibm.com/docs/en/cloud-paks/cp-data/4.0?topic=images-downloading-base-image'
+            click.echo(f'Examining doc resources for CPD 4.0 from {color(url_doc)} (same for the latest & historical versions)...')
+            page = requests.get(url_doc)
+            dfs = pd.read_html(page.text.replace('<br>','|'))
+            df_runtime = dfs[0]
+            latest_version = df_runtime['CPD patch version'].iloc[0]
 
-        if cpd_version:
-            df_runtime = df_runtime[df_runtime['CPD patch version'] == cpd_version]
-        else:
-            df_runtime = df_runtime[df_runtime['CPD patch version'] == latest_version]
-        
-        # keep only the amd version tag
-        df_runtime['Image version|base-image-version'] = df_runtime['Image version|base-image-version'].apply(lambda x: [v for v in x.split('|') if 'amd' in v][0])
-
-
-    elif service == 'ws':
-        if cpd_version:
-            try:
-                minor_version = cpd_version.split('.')[2]
-                int(minor_version)
-            except:
-                click.echo(f"{color('Error','error')}: The format of cpd_version is wrong. Example expected value: 4.0.5")
-                sys.exit(1)
-            
-            url_doc_historical = 'https://www.ibm.com/docs/en/cloud-paks/cp-data/4.0?topic=versions-documentation-previous-40x-refreshes'
-            click.echo(f'Examining historical doc resources for CPD 4.0 for version {color(cpd_version)} from {color(url_doc_historical)}')
-            dfs = pd.read_html(url_doc_historical)
-            
-            dfs_matched = [df for df in dfs if df['PDF'].str.contains(f'-R{minor_version}-').sum() > 0]
-            if len(dfs_matched) == 1:
-                df_doc = dfs_matched[0]
+            if cpd_version:
+                df_runtime = df_runtime[df_runtime['CPD patch version'] == cpd_version]
             else:
-                click.echo(f"{color('Error','error')}: {color(len(dfs_matched),'error')} matched record(s) found for cpd version {cpd_version}\nTry the link above and make sure your specified CPD version is available there.")
-                sys.exit(1)
-                
-            filename_doc = df_doc[df_doc['Section']=='Projects']['PDF'].values.tolist()[0]
-            url_doc = f'https://www.ibm.com/docs/en/SSQNUZ_4.0/archives/refresh-{minor_version}/{filename_doc}.pdf'
-            click.echo(f'WS config files for CPD 4.0 from official doc {color(url_doc)}:')
+                df_runtime = df_runtime[df_runtime['CPD patch version'] == latest_version]
             
-            try:
-                from tabula import read_pdf
-            except ImportError:
-                subprocess.run('pip install tabula-py',shell=True)
-                from tabula import read_pdf
-            
-            dfs = read_pdf(url_doc,pages='all')
-            dfs_matched = [df for df in dfs if df.columns[0] == 'JSON configuration file']
-            if len(dfs_matched) == 3:
-                if not rstudio:
-                    df_runtime = dfs_matched[0]
-                else:
-                    df_runtime = dfs_matched[1]
-            else:
-                click.echo(f"{color('Error','error')}: {color(len(dfs_matched),'error')} matched table(s) (!=3) found for cpd version {cpd_version}\nTry the link above and make sure the tables for runtime configuration files are there.")
-                sys.exit(1)
-
-        else:
-            url_doc = 'https://www.ibm.com/docs/en/cloud-paks/cp-data/4.0?topic=image-downloading-runtime-configuration'
-            click.echo(f'WS config files for CPD 4.0 from official doc {color(url_doc)}:')
-            dfs = pd.read_html(url_doc)
-            if not rstudio:
+            # keep only the amd version tag
+            df_runtime['Image version|base-image-version'] = df_runtime['Image version|base-image-version'].apply(lambda x: [v for v in x.split('|') if 'amd' in v][0])
+        elif cpd_version.startswith('4.5.'):
+            if cpd_version.endswith('1'):
+                url_doc = 'https://www.ibm.com/docs/en/cloud-paks/cp-data/4.5.x?topic=pbci-downloading-runtime-configuration'
+                click.echo(f'WS config files for CPD 4.0 from official doc {color(url_doc)}:')
+                dfs = pd.read_html(url_doc)
                 df_runtime = dfs[0]
             else:
-                df_runtime = dfs[1]
-        
+                # only 4.5.1 is supported as I haven't found the historical refreshes for 4.5.x
+                click.echo(f"{color('Error','error')}: this tool does not support cpd version {cpd_version}\nContact the author if you have a need.")
+                sys.exit(1)
+        else:
+            click.echo(f"{color('Error','error')}: this tool does not support cpd version {cpd_version}\nContact the author if you have a need.")
+            sys.exit(1)
+
+    elif service == 'ws':
+        if cpd_version.startswith('4.0.'):
+            if cpd_version.endswith('.9'):
+                url_doc = 'https://www.ibm.com/docs/en/cloud-paks/cp-data/4.0?topic=image-downloading-runtime-configuration'
+                click.echo(f'WS config files for CPD 4.0 from official doc {color(url_doc)}:')
+                dfs = pd.read_html(url_doc)
+                if not rstudio:
+                    df_runtime = dfs[0]
+                else:
+                    df_runtime = dfs[1]
+            else:
+                try:
+                    minor_version = cpd_version.split('.')[2]
+                    int(minor_version)
+                except:
+                    click.echo(f"{color('Error','error')}: The format of cpd_version is wrong. Example expected value: 4.0.5")
+                    sys.exit(1)
+                
+                url_doc_historical = 'https://www.ibm.com/docs/en/cloud-paks/cp-data/4.0?topic=versions-documentation-previous-40x-refreshes'
+                click.echo(f'Examining historical doc resources for CPD 4.0 for version {color(cpd_version)} from {color(url_doc_historical)}')
+                dfs = pd.read_html(url_doc_historical)
+                
+                dfs_matched = [df for df in dfs if df['PDF'].str.contains(f'-R{minor_version}-').sum() > 0]
+                if len(dfs_matched) == 1:
+                    df_doc = dfs_matched[0]
+                else:
+                    click.echo(f"{color('Error','error')}: {color(len(dfs_matched),'error')} matched record(s) found for cpd version {cpd_version}\nTry the link above and make sure your specified CPD version is available there.")
+                    sys.exit(1)
+                    
+                filename_doc = df_doc[df_doc['Section']=='Projects']['PDF'].values.tolist()[0]
+                url_doc = f'https://www.ibm.com/docs/en/SSQNUZ_4.0/archives/refresh-{minor_version}/{filename_doc}.pdf'
+                click.echo(f'WS config files for CPD 4.0 from official doc {color(url_doc)}:')
+                
+                try:
+                    from tabula import read_pdf
+                except ImportError:
+                    subprocess.run('pip install tabula-py',shell=True)
+                    from tabula import read_pdf
+                
+                dfs = read_pdf(url_doc,pages='all')
+                dfs_matched = [df for df in dfs if df.columns[0] == 'JSON configuration file']
+                if len(dfs_matched) == 3:
+                    if not rstudio:
+                        df_runtime = dfs_matched[0]
+                    else:
+                        df_runtime = dfs_matched[1]
+                else:
+                    click.echo(f"{color('Error','error')}: {color(len(dfs_matched),'error')} matched table(s) (!=3) found for cpd version {cpd_version}\nTry the link above and make sure the tables for runtime configuration files are there.")
+                    sys.exit(1)
+        elif cpd_version.startswith('4.5.'):
+            if cpd_version.endswith('.1'):
+                url_doc = 'https://www.ibm.com/docs/en/cloud-paks/cp-data/4.5.x?topic=image-downloading-runtime-configuration'
+                click.echo(f'WS config files for CPD 4.5 from official doc {color(url_doc)}:')
+                dfs = pd.read_html(url_doc)
+                if not rstudio:
+                    df_runtime = dfs[0]
+                else:
+                    df_runtime = dfs[1]
+            else:
+                # only 4.5.1 is supported as I haven't found the historical refreshes for 4.5.x
+                click.echo(f"{color('Error','error')}: this tool does not support cpd version {cpd_version}\nContact the author if you have a need.")
+                sys.exit(1)
+        else:
+            click.echo(f"{color('Error','error')}: this tool does not support cpd version {cpd_version}\nContact the author if you have a need.")
+            sys.exit(1)
+
     return df_runtime
 
 def get_config_files(fns,BASE_URL,USERNAME,APIKEY,USER_ACCESS_TOKEN,HEADERS_GET):
