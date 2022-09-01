@@ -222,7 +222,8 @@ def view(name, image_name):
 @click.option('--dir-dockerfile',type=str,default='.',help='directory to the location of the dockerfile')
 @click.option('--base-image-list',type=str,required=True,help='a filename of a text file containing base image names, one at a line')
 @click.option('--custom-image-name-pattern',type=str,default='{image_name}-custom',help='pattern of the custom image name; where the original image name which the custom file is based on is referred to as {image_name}')
-def build(registry_url, registry_namespace, dir_dockerfile, base_image_list, custom_image_name_pattern):
+@click.option('--docker-build-args',type=str,default='',help='Other docker build args to attach, for example "--no-cache=true"')
+def build(registry_url, registry_namespace, dir_dockerfile, base_image_list, custom_image_name_pattern, docker_build_args):
     """
     Build and push the custom image. 
     Note that you may need to run "docker login cp.icr.io" first, to make sure you have configured access to the
@@ -245,7 +246,7 @@ def build(registry_url, registry_namespace, dir_dockerfile, base_image_list, cus
         image_name_custom = custom_image_name_pattern.format(image_name=image_name)
         print(f'Building custom image {image_name_custom} based on {image_name}')
         
-        cmd = f'docker build {dir_dockerfile} --build-arg base_image_tag={base_image} -t {image_name_custom}'
+        cmd = f'docker build {dir_dockerfile} --build-arg base_image_tag={base_image} -t {image_name_custom} {docker_build_args}'
         print(f'Executing command: {cmd}')
         res = subprocess.run(cmd,shell=True)
         if res.returncode != 0:
