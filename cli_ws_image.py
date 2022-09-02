@@ -373,7 +373,7 @@ def push(base_image_list, custom_image_name_pattern, image_name,
 @click.option('--image-name-pattern','-i',type=str,default='us.icr.io/custom-image/{image_name}-custom:2',help='image name pattern, where the original image name which the custom file is based on is referred to as {image_name}; default value: us.icr.io/custom-image/{image_name}-custom:2')
 @click.option('--cpd-version','-v',type=str,default=None,help='a specific CPD version used to pull the default config list from doc; if not specified, information of the latest version is pulled')
 @click.option('--dry-run',is_flag=True,help='performing all the steps except for the last step to register the new custom config in WS')
-def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,service,
+def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,service,storage_volume,
            config_filename_pattern,display_name_pattern,image_name_pattern,cpd_version,dry_run):
     """
     List custom runtime configurations with known name patterns.
