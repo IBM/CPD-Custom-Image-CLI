@@ -12,21 +12,23 @@ import urllib
 import requests
 import subprocess
 import json
+import numpy as np
+import re
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 import pandas as pd # to format tables
-pd.options.display.width = 0
+pd.set_option('display.max_colwidth', None)
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context # fixed ssl certificate issue when downloading html in pandas
 
 USER_ACCESS_TOKEN = os.getenv('USER_ACCESS_TOKEN')
-USERNAME = os.getenv('USERNAME')
-APIKEY = os.getenv('APIKEY')
+USERNAME = os.getenv('CPD_USERNAME')
+APIKEY = os.getenv('CPD_APIKEY')
 
-BASE_URL = os.getenv('BASE_URL',os.getenv('RUNTIME_ENV_APSX_URL'))
+BASE_URL = os.getenv('CPD_BASE_URL',os.getenv('RUNTIME_ENV_APSX_URL'))
 
 HEADERS_GET = {'authorization':'Bearer {access_token}'}
 
@@ -287,12 +289,13 @@ def build(dir_dockerfile, base_image_list, custom_image_name_pattern, docker_bui
         if res.returncode != 0:
             click.echo(f"{color('FAILED','error')}: return code {res.returncode}. {res}")
         else:
-            cmd = f'docker tag {image_name_custom} {registry_url}/{registry_namespace}/{image_name_custom}'
-            print(f'Executing command: {cmd}')
-            subprocess.run(cmd,shell=True)
             print(f'Finished building custom image {image_name_custom}')
 
             if push:
+                cmd = f'docker tag {image_name_custom} {registry_url}/{registry_namespace}/{image_name_custom}'
+                print(f'Executing command: {cmd}')
+                subprocess.run(cmd,shell=True)
+
                 cmd = f'docker push {registry_url}/{registry_namespace}/{image_name_custom} {docker_push_args}'
                 print(f'Executing command: {cmd}')
                 subprocess.run(cmd,shell=True)
@@ -307,7 +310,7 @@ def build(dir_dockerfile, base_image_list, custom_image_name_pattern, docker_bui
 @click.option('--registry-namespace',type=str,default='custom-image',help='registry namespace to store the custom image')
 @click.option('--docker-push-args',type=str,default='',help='Other docker push args')
 def push(base_image_list, custom_image_name_pattern, image_name,
-        registry_url, registry_namespace, docker_push_args):
+         registry_url, registry_namespace, docker_push_args):
     """
     Push the custom images. 
     Note that you may need to run "docker login <your-container-registry>" first, to make sure you have configured access to the
@@ -478,7 +481,89 @@ def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,service,s
             sys.exit(0)
         else:
             put_config_files(['./tmp/'+fn for fn in d_config_new.keys()], BASE_URL, USERNAME, APIKEY, USER_ACCESS_TOKEN, HEADERS_GET)
+
+
+# -------- cli group: pkg --------
+@cli.group()
+def pkg():
+    """
+    check available packages
+    """
+    pass
+
+@pkg.command()
+@click.option('--pkg-type',type=str,default='microdnf',help='the type of packages defined by the installation command; only supports microdnf')
+@click.option('--channel','-c',type=str,multiple=True,help='a specific channel to list packages from; can specify multiple by using this argument for multipe times, one channel at a time')
+@click.option('--channel-only',is_flag=True,help='whether to only list the channels')
+@click.option('--x86-only',is_flag=True,help='whether to only include packages compatible with x86_64 (.x86_64.rpm or .noarch.rpm)')
+@click.option('--export-fn',type=str,default=None,help='the output filename')
+@click.option('--export-format',type=str,default='csv',help='csv exports only the base images to be used later')
+@click.option('--overwrite','-o',is_flag=True,help='whether to overwrite the output file if it exists')
+def list(pkg_type,channel,channel_only,x86_only,export_fn,export_format,overwrite):
+    if pkg_type == 'microdnf':
+        l_repo = list_channel(pkg_type)
+        if channel_only:
+            sys.exit(0)
+        else:
+            df_pkg = list_pkg(pkg_type,channel,l_repo,x86_only)
         
+        # export
+        if export_fn is not None:
+            if export_format == 'csv':
+                if os.path.exists(export_fn):
+                    click.echo(f"Export filename {color(export_fn)} already exists.")
+                    if not overwrite:
+                        click.echo(f"{color('Stopped','error')}")
+                        sys.exit(1)
+                    else:
+                        click.echo(f"Overwriting file {color(export_fn)}...")
+                else:
+                    click.echo(f"Export filename {color(export_fn)} does not exist.")
+                
+                df_pkg.to_csv(export_fn,index=False)
+                click.echo(f"Package list written to {color(export_fn,'pass')}")
+        else:
+            print(df_pkg)
+
+@pkg.command()
+@click.option('--name',type=str,required=True,help='the package name to search for')
+@click.option('--pkg-type',type=str,default='microdnf',help='the type of packages defined by the installation command; only supports microdnf')
+@click.option('--channel','-c',type=str,multiple=True,help='a specific channel to list packages from; can specify multiple by using this argument for multipe times, one channel at a time')
+@click.option('--x86-only',is_flag=True,help='whether to only include packages compatible with x86_64 (.x86_64.rpm or .noarch.rpm)')
+@click.option('--file',type=str,help='path to an already exported file from pkg list or pkg search command, from where to do the search')
+@click.option('--export-fn',type=str,default=None,help='the output filename')
+@click.option('--export-format',type=str,default='csv',help='csv exports only the base images to be used later')
+@click.option('--overwrite','-o',is_flag=True,help='whether to overwrite the output file if it exists')
+def search(name,pkg_type,channel,x86_only,file,export_fn,export_format,overwrite):
+    if pkg_type == 'microdnf':
+        if file:
+            df_pkg = pd.read_csv(file)
+        else:
+            l_repo = list_channel(pkg_type)
+            df_pkg = list_pkg(pkg_type,channel,l_repo,x86_only)
+        
+        df_pkg = df_pkg[df_pkg['pkg'].str.contains(name)].reset_index(drop=True)
+        df_pkg = df_pkg.drop(['channel'],axis=1)
+        
+        # export
+        if export_fn is not None:
+            if export_format == 'csv':
+                if os.path.exists(export_fn):
+                    click.echo(f"Export filename {color(export_fn)} already exists.")
+                    if not overwrite:
+                        click.echo(f"{color('Stopped','error')}")
+                        sys.exit(1)
+                    else:
+                        click.echo(f"Overwriting file {color(export_fn)}...")
+                else:
+                    click.echo(f"Export filename {color(export_fn)} does not exist.")
+                
+                df_pkg.to_csv(export_fn,index=False)
+                click.echo(f"Package list written to {color(export_fn,'pass')}")
+        else:
+            print(df_pkg)
+
+
 # -------- util --------
 
 def color(x,condition='normal'):
@@ -518,18 +603,18 @@ def validate_authorization(BASE_URL,USERNAME,APIKEY,USER_ACCESS_TOKEN):
     USER_ACCESS_TOKEN = None if USER_ACCESS_TOKEN is not None and len(USER_ACCESS_TOKEN) < 1000 else USER_ACCESS_TOKEN
     
     if BASE_URL is None:
-        click.echo(f"{color('Error','error')}: {color(BASE_URL,'error')} is not defined or invalid; specify it by executing command 'export BASE_URL=<your cpd host>', for example 'export BASE_URL=https://mycpd.com'")
+        click.echo(f"{color('Error','error')}: {color('CPD_BASE_URL','error')} is not defined or invalid; specify it by executing command 'export CPD_BASE_URL=<your cpd host>', for example 'export CPD_BASE_URL=https://mycpd.com'")
         sys.exit(1)
     
     if USERNAME is None and APIKEY is None:
         if USER_ACCESS_TOKEN is None:
-            click.echo(f"{color('Error','error')}: Authorization information is not defined or invalid. Specify either {color('USER_ACCESS_TOKEN','error')}, or both {color('USERNAME','error')} and {color('APIKEY','error')}; For example, specify USERNAME by executing command 'export USERNAME=<your username>'")
+            click.echo(f"{color('Error','error')}: Authorization information is not defined or invalid. Specify either {color('USER_ACCESS_TOKEN','error')}, or both {color('CPD_USERNAME','error')} and {color('CPD_APIKEY','error')}; For example, specify CPD_USERNAME by executing command 'export CPD_USERNAME=<your username>'")
             sys.exit(1)
     elif USERNAME is None and APIKEY is not None:
-        click.echo(f"{color('Error','error')}: {color(USERNAME,'error')} is not defined or invalid, but {color(APIKEY,'normal')} is valid; specify both environment variables or neither")
+        click.echo(f"{color('Error','error')}: {color('CPD_USERNAME','error')} is not defined or invalid, but {color('CPD_APIKEY','normal')} is valid; specify both environment variables or neither")
         sys.exit(1)
     elif USERNAME is not None and APIKEY is None:
-        click.echo(f"{color('Error','error')}: {color(APIKEY,'error')} is not defined or invalid, but {color(USERNAME,'normal')} is valid; specify both environment variables or neither")
+        click.echo(f"{color('Error','error')}: {color('CPD_APIKEY','error')} is not defined or invalid, but {color('CPD_USERNAME','normal')} is valid; specify both environment variables or neither")
         sys.exit(1)
     else:
         credentials = {'username':USERNAME,
@@ -686,6 +771,77 @@ def put_config_files(fns,BASE_URL,USERNAME,APIKEY,USER_ACCESS_TOKEN,HEADERS_PUT)
         res = requests.put(url, headers=headers, files={'upFile': (fn, open(fn, 'rb'))}, verify=False)
         print(fn)
         print(res.text)
+
+
+def drop_invalid_val(l,vals_to_drop=[],drop_nan=True):
+    res = []
+    for x in l:
+        if x not in vals_to_drop:
+            if drop_nan:
+                try:
+                    if np.isnan(x):
+                        pass
+                    else:
+                        res.append(x)
+                except:
+                    res.append(x)
+            else:
+                res.append(x)
+    return res
+
+
+def list_channel(pkg_type):
+    if pkg_type == 'microdnf':
+        url = 'http://rpmfind.net/linux/centos/8-stream/'
+        l_repo = pd.read_html(url)[0]['Name'].values.tolist()
+        l_repo = drop_invalid_val(l_repo,['Parent Directory'])
+        l_repo = [x[:-1] for x in l_repo]
+        click.echo(f"Searchable channels for {color(pkg_type)}:")
+        print('\n'.join(l_repo))
+        return l_repo
+    else:
+        click.echo(f"{color('Error','error')}: --pkg-type {pkg_type} only supports microdnf at the moment")
+        sys.exit(1)
+
+def list_pkg(pkg_type,channel,l_repo,x86_only):
+        if len(channel)>0:
+            l_repo_reduced = []
+            for c in channel:
+                if c not in l_repo:
+                    click.echo(f"{color('Warning','error')}: Specified channel {c} is not in searchable channels. However, it might be usable. You could proceed with using it in the dockerfile and see if it works.")
+                else:
+                    l_repo_reduced.append(c)
+            click.echo(f"{color(len(l_repo_reduced))} channels to proceed with: {l_repo_reduced}")
+            if len(l_repo_reduced) == 0:
+                sys.exit(0)
+        else:
+            l_repo_reduced = l_repo
+            click.echo(f"{color(len(l_repo_reduced))} channels to proceed with: {l_repo_reduced}")
+        
+        df_pkg = pd.DataFrame()
+        if pkg_type == 'microdnf':
+            for repo in l_repo_reduced:
+                url = f"http://rpmfind.net/linux/centos/8-stream/{repo}/x86_64/os/Packages/"
+                click.echo(f"Fetching list of packages from channel {color(repo)} ({color(url)})...")
+                try:
+                    res = requests.get(url)
+                except:
+                    click.echo(f"Channel {repo} does not have packages organized in the regular way. It may not be a valid one for rpm packages.")
+                    next
+                l_pkg = re.findall(r'href="(.+?)"',res.content.decode())
+                l_pkg = [x for x in l_pkg if x.endswith('.rpm')]
+
+                if x86_only:
+                    l_pkg = [x for x in l_pkg if x.endswith('.x86_64.rpm') or x.endswith('.noarch.rpm')]
+                l_link = [f"http://rpmfind.net/linux/centos/8-stream/{repo}/x86_64/os/Packages/{x}" for x in l_pkg]
+                df_pkg_cur = pd.DataFrame({'channel':repo,
+                                            'pkg':l_pkg,
+                                            'link':l_link})
+                df_pkg = pd.concat([df_pkg,df_pkg_cur])
+            return df_pkg
+        else:
+            click.echo(f"{color('Error','error')}: --pkg-type {pkg_type} only supports microdnf at the moment")
+            sys.exit(1)
 
 if __name__ == '__main__':
     cli()
