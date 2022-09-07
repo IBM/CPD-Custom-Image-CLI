@@ -25,8 +25,12 @@ oc extract secret/pull-secret -n openshift-config
 auth=$(cat .dockerconfigjson| python3 -c "import sys, json; print(json.load(sys.stdin)['auths']['cp.icr.io/cp/cpd']['auth'])")
 auth=$(echo $auth | base64 -d)
 
-username=$(echo $key | cut -d: -f 1)
-password=$(echo $key | cut -d: -f 2)
+username=$(echo $auth | cut -d: -f 1)
+password=$(echo $auth | cut -d: -f 2)
+```
+**If you get error complaining `cp.icr.io/cp/cpd` not found, change the first command to:**
+```
+auth=$(cat .dockerconfigjson| python3 -c "import sys, json; print(json.load(sys.stdin)['auths']['cp.icr.io']['auth'])")
 ```
 
 ## Register Secrets

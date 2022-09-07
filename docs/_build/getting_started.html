@@ -52,7 +52,11 @@
 <li class="toctree-l4"><a class="reference internal" href="#custom-image-container-registry">1.2 custom image container registry</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#run-cli-command">2. Run CLI command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-cli-command">2. Run CLI command</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#separate-build-and-push">2.1 Separate build and push</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#build-push-in-one-command">2.2 Build &amp; Push in one command</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#step-3-register-in-cpd-service">Step 3. Register in CPD Service</a><ul>
@@ -129,15 +133,15 @@
 <li><p><strong>Cloud Pak for Data admin role</strong></p></li>
 </ul>
 <p>Run the following commands to set up your credentials to your Cloud Pak for Data cluster:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">BASE_URL</span><span class="o">=</span>&lt;your cpd link&gt;
-<span class="nb">export</span> <span class="nv">USERNAME</span><span class="o">=</span>&lt;your username&gt;
-<span class="nb">export</span> <span class="nv">APIKEY</span><span class="o">=</span>&lt;your apikey&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">CPD_BASE_URL</span><span class="o">=</span>&lt;your cpd link&gt;
+<span class="nb">export</span> <span class="nv">CPD_USERNAME</span><span class="o">=</span>&lt;your username&gt;
+<span class="nb">export</span> <span class="nv">CPD_APIKEY</span><span class="o">=</span>&lt;your apikey&gt;
 </pre></div>
 </div>
 <p>For example:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">BASE_URL</span><span class="o">=</span>https://mycpd.com
-<span class="nb">export</span> <span class="nv">USERNAME</span><span class="o">=</span>wendy
-<span class="nb">export</span> <span class="nv">APIKEY</span><span class="o">=</span>ziE9KHmhKy2aHemKLeXa2CjTXpJbse8ZKjzoxH7d
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">CPD_BASE_URL</span><span class="o">=</span>https://mycpd.com
+<span class="nb">export</span> <span class="nv">CPD_USERNAME</span><span class="o">=</span>wendy
+<span class="nb">export</span> <span class="nv">CPD_APIKEY</span><span class="o">=</span>ziE9KHmhKy2aHemKLeXa2CjTXpJbse8ZKjzoxH7d
 </pre></div>
 </div>
 <p>(The above is a dummy example.)</p>
@@ -172,6 +176,11 @@ python cli_ws_image.py default list --rstudio <span class="c1"># rstudio environ
 <div class="section" id="login-to-both-container-registry">
 <h3>1. Login to both container registry<a class="headerlink" href="#login-to-both-container-registry" title="Permalink to this heading"></a></h3>
 <p>Before running the build command, you need to authenticate to both the CPD base image container registry as well as your custom image container registry.</p>
+<p>Note that:</p>
+<ul class="simple">
+<li><p><strong>base-image-list</strong>: this is the path to the file after switching to <strong>dir-dockerfile</strong>, not relative to where you run the command</p></li>
+<li><p><strong>custom-image-name-pattern</strong>: this is a name pattern, where <code class="docutils literal notranslate"><span class="pre">image_name</span></code> can be optionally used to refer to the original/base image name</p></li>
+</ul>
 <div class="section" id="cpd-base-image-container-registry">
 <h4>1.1 CPD base image container registry<a class="headerlink" href="#cpd-base-image-container-registry" title="Permalink to this heading"></a></h4>
 <p>To login to <code class="docutils literal notranslate"><span class="pre">cp.icr.io</span></code>, run the following:</p>
@@ -186,23 +195,57 @@ python cli_ws_image.py default list --rstudio <span class="c1"># rstudio environ
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ibmcloud login -g &lt;resource-group&gt; --apikey &lt;iam-apikey&gt; <span class="o">&amp;&amp;</span> ibmcloud cr login
 </pre></div>
 </div>
+<p>If you intend to use CPD’s internal container registry for the custom images, the command will look like th following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker login -u <span class="k">$(</span>oc whoami<span class="k">)</span> -p <span class="k">$(</span>oc whoami -t<span class="k">)</span> default-route-openshift-image-registry.****
+</pre></div>
+</div>
+<p>Likely you will encounter the insecure registry issue. To resolve it, you may refer to <a class="reference external" href="https://docs.docker.com/registry/insecure/">this page in Docker documnetaion</a>.</p>
 </div>
 </div>
 <div class="section" id="run-cli-command">
 <h3>2. Run CLI command<a class="headerlink" href="#run-cli-command" title="Permalink to this heading"></a></h3>
-<p>The <code class="docutils literal notranslate"><span class="pre">custom</span> <span class="pre">build</span></code> command builds the custom images and pushes each of them to the target container registry for custom images.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --registry-url &lt;registry-for-custom-image&gt; --registry-namespace &lt;namespace&gt; --dir-dockerfile &lt;directory-of-dockerfile&gt; --base-image-list &lt;path-to-base-image-list&gt; --custom-image-name-pattern &lt;pattern&gt;
+<p>The <code class="docutils literal notranslate"><span class="pre">custom</span> <span class="pre">build</span></code> command builds the custom images and optionally pushes each of them to the target container registry for custom images.</p>
+<div class="section" id="separate-build-and-push">
+<h4>2.1 Separate build and push<a class="headerlink" href="#separate-build-and-push" title="Permalink to this heading"></a></h4>
+<p>In some situations you may not want to run both build and push together. It might be that a developer builds the image, then an IT admin pushes it to the registry. This is possible with the CLI tool.</p>
+<div class="section" id="build">
+<h5>Build<a class="headerlink" href="#build" title="Permalink to this heading"></a></h5>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --dir-dockerfile &lt;directory-of-dockerfile&gt; --base-image-list &lt;path-to-base-image-list&gt; --custom-image-name-pattern &lt;pattern&gt;
+</pre></div>
+</div>
+<p>Example commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --dir-dockerfile ../custom-image --base-image-list base_images_nongpu_408.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-ws-applications
+
+python cli_ws_image.py custom build --dir-dockerfile . --base-image-list base_images_wmlpython_407.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-custom
+</pre></div>
+</div>
+</div>
+<div class="section" id="push">
+<h5>Push<a class="headerlink" href="#push" title="Permalink to this heading"></a></h5>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom push --base-image-list &lt;path-to-base-image-list&gt; --custom-image-name-pattern &lt;pattern&gt; --registry-url &lt;registry-for-custom-image&gt; --registry-namespace &lt;namespace&gt;
+</pre></div>
+</div>
+<p>Example commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># push using info from base image list, easy for pushing custom images based on multiple base images</span>
+python cli_ws_image.py custom push --base-image-list ./base_images_wmlpython_408.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-custom --registry-url us.icr.io --registry-namespace cpd-custom-image
+
+<span class="c1"># push using image name</span>
+python cli_ws_image.py custom push --image-name wml-deployment-runtime-py39-1-custom --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-custom --registry-url us.icr.io --registry-namespace cpd-custom-image
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="build-push-in-one-command">
+<h4>2.2 Build &amp; Push in one command<a class="headerlink" href="#build-push-in-one-command" title="Permalink to this heading"></a></h4>
+<p>In some other times, it might be eaiser to do both build and push together. You can use the <code class="docutils literal notranslate"><span class="pre">--push</span></code> flag to enable this, and provide the needed information.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --dir-dockerfile &lt;directory-of-dockerfile&gt; --base-image-list &lt;path-to-base-image-list&gt; --custom-image-name-pattern &lt;pattern&gt; --push --registry-url &lt;registry-for-custom-image&gt; --registry-namespace &lt;namespace&gt;
 </pre></div>
 </div>
 <p>For example:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --registry-url us.icr.io --registry-namespace cpd-custom-image --dir-dockerfile ../custom-image --base-image-list base_images_nongpu_408.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-ws-applications
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --dir-dockerfile . --base-image-list base_images_wmlpython_407.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-custom --push --registry-url us.icr.io --registry-namespace cpd-custom-image
 </pre></div>
 </div>
-<p>Note that:</p>
-<ul class="simple">
-<li><p><strong>base-image-list</strong>: this is the path to the file after switching to <strong>dir-dockerfile</strong>, not relative to where you run the command</p></li>
-<li><p><strong>custom-image-name-pattern</strong>: this is a name pattern, where <code class="docutils literal notranslate"><span class="pre">image_name</span></code> can be optionally used to refer to the original/base image name</p></li>
-</ul>
+</div>
 </div>
 </div>
 <div class="section" id="step-3-register-in-cpd-service">

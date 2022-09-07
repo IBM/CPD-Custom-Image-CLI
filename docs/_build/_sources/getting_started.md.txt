@@ -26,16 +26,16 @@ Access role required:
 
 Run the following commands to set up your credentials to your Cloud Pak for Data cluster:
 ```bash
-export BASE_URL=<your cpd link>
-export USERNAME=<your username>
-export APIKEY=<your apikey>
+export CPD_BASE_URL=<your cpd link>
+export CPD_USERNAME=<your username>
+export CPD_APIKEY=<your apikey>
 ```
 
 For example:
 ```bash
-export BASE_URL=https://mycpd.com
-export USERNAME=wendy
-export APIKEY=ziE9KHmhKy2aHemKLeXa2CjTXpJbse8ZKjzoxH7d
+export CPD_BASE_URL=https://mycpd.com
+export CPD_USERNAME=wendy
+export CPD_APIKEY=ziE9KHmhKy2aHemKLeXa2CjTXpJbse8ZKjzoxH7d
 ```
 (The above is a dummy example.)
 
@@ -74,6 +74,11 @@ Access required:
 
 ### 1. Login to both container registry
 Before running the build command, you need to authenticate to both the CPD base image container registry as well as your custom image container registry.
+
+Note that:
+- **base-image-list**: this is the path to the file after switching to **dir-dockerfile**, not relative to where you run the command
+- **custom-image-name-pattern**: this is a name pattern, where `image_name` can be optionally used to refer to the original/base image name
+
 #### 1.1 CPD base image container registry
 To login to `cp.icr.io`, run the following:
 ```bash
@@ -87,20 +92,50 @@ To login to the container registry for custom images, you can run a similar `doc
 ibmcloud login -g <resource-group> --apikey <iam-apikey> && ibmcloud cr login
 ```
 
-### 2. Run CLI command
-The `custom build` command builds the custom images and pushes each of them to the target container registry for custom images.
+If you intend to use CPD's internal container registry for the custom images, the command will look like th following:
 ```bash
-python cli_ws_image.py custom build --registry-url <registry-for-custom-image> --registry-namespace <namespace> --dir-dockerfile <directory-of-dockerfile> --base-image-list <path-to-base-image-list> --custom-image-name-pattern <pattern>
+docker login -u $(oc whoami) -p $(oc whoami -t) default-route-openshift-image-registry.****
+```
+Likely you will encounter the insecure registry issue. To resolve it, you may refer to [this page in Docker documnetaion](https://docs.docker.com/registry/insecure/).
+
+### 2. Run CLI command
+The `custom build` command builds the custom images and optionally pushes each of them to the target container registry for custom images.
+
+#### 2.1 Separate build and push
+In some situations you may not want to run both build and push together. It might be that a developer builds the image, then an IT admin pushes it to the registry. This is possible with the CLI tool.
+##### Build
+```bash
+python cli_ws_image.py custom build --dir-dockerfile <directory-of-dockerfile> --base-image-list <path-to-base-image-list> --custom-image-name-pattern <pattern>
+```
+Example commands:
+```bash
+python cli_ws_image.py custom build --dir-dockerfile ../custom-image --base-image-list base_images_nongpu_408.txt --custom-image-name-pattern {image_name}-ws-applications
+
+python cli_ws_image.py custom build --dir-dockerfile . --base-image-list base_images_wmlpython_407.txt --custom-image-name-pattern {image_name}-custom
+```
+##### Push
+```bash
+python cli_ws_image.py custom push --base-image-list <path-to-base-image-list> --custom-image-name-pattern <pattern> --registry-url <registry-for-custom-image> --registry-namespace <namespace>
+```
+Example commands:
+```bash
+# push using info from base image list, easy for pushing custom images based on multiple base images
+python cli_ws_image.py custom push --base-image-list ./base_images_wmlpython_408.txt --custom-image-name-pattern {image_name}-custom --registry-url us.icr.io --registry-namespace cpd-custom-image
+
+# push using image name
+python cli_ws_image.py custom push --image-name wml-deployment-runtime-py39-1-custom --custom-image-name-pattern {image_name}-custom --registry-url us.icr.io --registry-namespace cpd-custom-image
+```
+#### 2.2 Build & Push in one command
+In some other times, it might be eaiser to do both build and push together. You can use the `--push` flag to enable this, and provide the needed information.
+```bash
+python cli_ws_image.py custom build --dir-dockerfile <directory-of-dockerfile> --base-image-list <path-to-base-image-list> --custom-image-name-pattern <pattern> --push --registry-url <registry-for-custom-image> --registry-namespace <namespace>
 ```
 
 For example:
 ```bash
-python cli_ws_image.py custom build --registry-url us.icr.io --registry-namespace cpd-custom-image --dir-dockerfile ../custom-image --base-image-list base_images_nongpu_408.txt --custom-image-name-pattern {image_name}-ws-applications
+python cli_ws_image.py custom build --dir-dockerfile . --base-image-list base_images_wmlpython_407.txt --custom-image-name-pattern {image_name}-custom --push --registry-url us.icr.io --registry-namespace cpd-custom-image
 ```
 
-Note that:
-- **base-image-list**: this is the path to the file after switching to **dir-dockerfile**, not relative to where you run the command
-- **custom-image-name-pattern**: this is a name pattern, where `image_name` can be optionally used to refer to the original/base image name
 
 ## Step 3. Register in CPD Service
 In order to use the custom image, the target service in Cloud Pak for Data needs to be aware of this image.

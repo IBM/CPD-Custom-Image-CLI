@@ -47,14 +47,18 @@
 <li class="toctree-l2"><a class="reference internal" href="#preparation-specify-if-not-in-watson-studio">0. Preparation: specify if not in watson studio</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#get-base-image-names">1. Get base image names</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#latest-cpd-version">latest cpd version</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#historical-cpd-version">historical cpd version</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historical-cpd-version-use-cpd-version-arg">historical cpd version: use –cpd-version arg</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#build-and-push-custom-images">2. Build and push custom images</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#build-custom-images">2. Build custom images</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#push-custom-images">3. Push custom images</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#build-push-in-one-command-use-flag-push-and-other-args-needed-by-the-push-command">2+3 - Build &amp; Push in one command: use flag –push and other args needed by the push command</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#register-custom-images-in-watson-studio">3. Register custom images in watson studio</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#other-commnds">4. Other commnds</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#list-custom-configs">4.1 list custom configs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#view-a-specific-config">4.2 view a specific config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-packages-available-to-be-installed-using-microdnf">4.3 list packages available to be installed using microdnf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#search-for-a-package-microdnf">4.4 search for a package (microdnf)</a></li>
 </ul>
 </li>
 </ul>
@@ -89,9 +93,9 @@
 <h1>Cheat Sheet<a class="headerlink" href="#cheat-sheet" title="Permalink to this heading"></a></h1>
 <div class="section" id="preparation-specify-if-not-in-watson-studio">
 <h2>0. Preparation: specify if not in watson studio<a class="headerlink" href="#preparation-specify-if-not-in-watson-studio" title="Permalink to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">BASE_URL</span><span class="o">=</span>******
-<span class="nb">export</span> <span class="nv">USERNAME</span><span class="o">=</span>******
-<span class="nb">export</span> <span class="nv">APIKEY</span><span class="o">=</span>******
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">CPD_BASE_URL</span><span class="o">=</span>******
+<span class="nb">export</span> <span class="nv">CPD_USERNAME</span><span class="o">=</span>******
+<span class="nb">export</span> <span class="nv">CPD_APIKEY</span><span class="o">=</span>******
 </pre></div>
 </div>
 </div>
@@ -100,42 +104,75 @@
 <div class="section" id="latest-cpd-version">
 <h3>latest cpd version<a class="headerlink" href="#latest-cpd-version" title="Permalink to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py default list --cpu
-python cli_ws_image.py default list --service ws --cpu <span class="c1"># default service is ws</span>
-python cli_ws_image.py default list --service wml --cpu
-
 python cli_ws_image.py default list --gpu
 python cli_ws_image.py default list -a
 python cli_ws_image.py default list --rstudio
 
-python cli_ws_image.py default list --cpu --export-fn base_images_nongpu_408.txt -o
-python cli_ws_image.py default list --cpu --export-fn base_images_nongpu_408.txt
+<span class="c1"># specify service</span>
+python cli_ws_image.py default list --service ws --cpu <span class="c1"># default service is ws</span>
+python cli_ws_image.py default list --service wml --cpu
 
-python cli_ws_image.py default list --rstudio --export-fn base_images_rstudio_407.txt
+<span class="c1"># export</span>
+python cli_ws_image.py default list --cpu --export-fn base_images_nongpu_451.txt
+python cli_ws_image.py default list --rstudio --export-fn base_images_rstudio_451.txt -o
 </pre></div>
 </div>
 </div>
-<div class="section" id="historical-cpd-version">
-<h3>historical cpd version<a class="headerlink" href="#historical-cpd-version" title="Permalink to this heading"></a></h3>
+<div class="section" id="historical-cpd-version-use-cpd-version-arg">
+<h3>historical cpd version: use –cpd-version arg<a class="headerlink" href="#historical-cpd-version-use-cpd-version-arg" title="Permalink to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py default list -a --cpd-version <span class="m">4</span>.0.6
 
 python cli_ws_image.py default list --rstudio --cpd-version <span class="m">4</span>.0.7 --export-fn base_images_rstudio_407.txt
-python cli_ws_image.py default list --rstudio --cpd-version <span class="m">4</span>.0.8 --export-fn base_images_rstudio_408.txt
 
 python cli_ws_image.py default list --service wml --cpu --cpd-version <span class="m">4</span>.0.7 --export-fn base_images_wmlpython_407.txt
 </pre></div>
 </div>
 </div>
 </div>
-<div class="section" id="build-and-push-custom-images">
-<h2>2. Build and push custom images<a class="headerlink" href="#build-and-push-custom-images" title="Permalink to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --registry-url us.icr.io --registry-namespace custom-image-cli-test --dir-dockerfile ../custom-image --base-image-list base_images_nongpu_408.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-ws-applications
+<div class="section" id="build-custom-images">
+<h2>2. Build custom images<a class="headerlink" href="#build-custom-images" title="Permalink to this heading"></a></h2>
+<p>Login to docker:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker login cp.icr.io --username &lt;username&gt; --password &lt;password&gt;
+</pre></div>
+</div>
+<p>Then run the commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --dir-dockerfile ../custom-image --base-image-list base_images_nongpu_408.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-ws-applications
 
-python cli_ws_image.py custom build --registry-url us.icr.io --registry-namespace cpd-custom-image --dir-dockerfile . --base-image-list base_images_wmlpython_407.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-custom
+python cli_ws_image.py custom build --dir-dockerfile . --base-image-list base_images_wmlpython_407.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-custom
+</pre></div>
+</div>
+</div>
+<div class="section" id="push-custom-images">
+<h2>3. Push custom images<a class="headerlink" href="#push-custom-images" title="Permalink to this heading"></a></h2>
+<p>Login to docker:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># in general</span>
+docker login &lt;registry-url-for-custom-images&gt; --username &lt;username&gt; -- password &lt;password&gt;
+
+<span class="c1"># ibmcloud container registry</span>
+ibmcloud login -g &lt;resource-group&gt; --apikey &lt;apikey&gt; <span class="o">&amp;&amp;</span> ibmcloud cr login
+
+<span class="c1"># CPD internal registry: you may need to address the insecure registry problem (https://docs.docker.com/registry/insecure/)</span>
+docker login -u <span class="k">$(</span>oc whoami<span class="k">)</span> -p <span class="k">$(</span>oc whoami -t<span class="k">)</span> default-route-openshift-image-registry.****
+</pre></div>
+</div>
+<p>Then run the commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># push using info from base image list, easy for pushing custom images based on multiple base images</span>
+python cli_ws_image.py custom push --base-image-list ./base_images_wmlpython_408.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-custom --registry-url us.icr.io --registry-namespace cpd-custom-image
+
+<span class="c1"># push using image name</span>
+python cli_ws_image.py custom push --image-name wml-deployment-runtime-py39-1-custom --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-custom --registry-url us.icr.io --registry-namespace cpd-custom-image
+</pre></div>
+</div>
+</div>
+<div class="section" id="build-push-in-one-command-use-flag-push-and-other-args-needed-by-the-push-command">
+<h2>2+3 - Build &amp; Push in one command: use flag –push and other args needed by the push command<a class="headerlink" href="#build-push-in-one-command-use-flag-push-and-other-args-needed-by-the-push-command" title="Permalink to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom build --dir-dockerfile . --base-image-list base_images_wmlpython_407.txt --custom-image-name-pattern <span class="o">{</span>image_name<span class="o">}</span>-custom --push --registry-url us.icr.io --registry-namespace cpd-custom-image
 </pre></div>
 </div>
 </div>
 <div class="section" id="register-custom-images-in-watson-studio">
 <h2>3. Register custom images in watson studio<a class="headerlink" href="#register-custom-images-in-watson-studio" title="Permalink to this heading"></a></h2>
+<p>Remove <code class="docutils literal notranslate"><span class="pre">--dry-run</span></code> flag to allow the file to be put into the correct location in CPD.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --jupyter --dry-run
 python cli_ws_image.py custom register --jupyterlab --dry-run
 python cli_ws_image.py custom register --jupyter-all --dry-run
@@ -163,6 +200,32 @@ python cli_ws_image.py custom list -c ws-applications-<span class="o">{</span>fi
 python cli_ws_image.py custom view --name ws-applications-408-jupyter-lab-py39-server.json --image-name
 
 python cli_ws_image.py custom view --name ws-applications-jupyter-py39-server.json <span class="c1"># it actually works for default config too</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="list-packages-available-to-be-installed-using-microdnf">
+<h3>4.3 list packages available to be installed using microdnf<a class="headerlink" href="#list-packages-available-to-be-installed-using-microdnf" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># list only the channels</span>
+python cli_ws_image.py pkg list --channel-only
+
+<span class="c1"># list packages under selected channels</span>
+python cli_ws_image.py pkg list -c isos -c PowerTools
+python cli_ws_image.py pkg list -c isos -c PowerTools --x86-only
+python cli_ws_image.py pkg list -c isos -c PowerTools --x86-only --export-fn microdnf_pkg.csv -o
+
+<span class="c1"># list packages under all channels</span>
+python cli_ws_image.py pkg list --x86-only --export-fn microdnf_pkg.csv -o
+</pre></div>
+</div>
+</div>
+<div class="section" id="search-for-a-package-microdnf">
+<h3>4.4 search for a package (microdnf)<a class="headerlink" href="#search-for-a-package-microdnf" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># search using online info</span>
+python cli_ws_image.py pkg search --name libgit2
+python cli_ws_image.py pkg search --name libgit2 --x86-only
+
+<span class="c1"># search using an existing file exported by pkg list or pkg search command</span>
+python cli_ws_image.py pkg search --name libgit2 --x86-only --file microdnf_pkg.csv
 </pre></div>
 </div>
 </div>
