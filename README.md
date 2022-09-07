@@ -28,9 +28,13 @@ It streamlines the process of creating a custom image for Cloud Pak for Data run
 
 ## More Links
 
-Watson Studio Doc: https://www.ibm.com/docs/en/cloud-paks/cp-data/4.0?topic=environments-building-custom-images
+Watson Studio Doc: 
+- [4.0.x](https://www.ibm.com/docs/en/cloud-paks/cp-data/4.0?topic=environments-building-custom-images)
+- [4.5.x](https://www.ibm.com/docs/en/cloud-paks/cp-data/4.5.x?topic=environments-building-custom-images)
 
-Watson Machine Learning Doc: https://www.ibm.com/docs/en/cloud-paks/cp-data/4.0?topic=functions-working-custom-images
+Watson Machine Learning Doc: 
+- [4.0.x](https://www.ibm.com/docs/en/cloud-paks/cp-data/4.0?topic=functions-working-custom-images)
+- [4.5.x](https://www.ibm.com/docs/en/cloud-paks/cp-data/4.5.x?topic=functions-working-custom-images)
 
 
 ## How to Contribute
