@@ -329,6 +329,10 @@ def push(base_image_list, custom_image_name_pattern, image_name,
         image_name_custom = image_name
         print(f'Pushing custom image {image_name_custom}')
         
+        cmd = f'docker tag {image_name_custom} {registry_url}/{registry_namespace}/{image_name_custom}'
+        print(f'Executing command: {cmd}')
+        subprocess.run(cmd,shell=True)
+
         cmd = f'docker push {registry_url}/{registry_namespace}/{image_name_custom} {docker_push_args}'
         print(f'Executing command: {cmd}')
         res = subprocess.run(cmd,shell=True)
@@ -349,6 +353,11 @@ def push(base_image_list, custom_image_name_pattern, image_name,
             else:
                 image_name = base_image
             image_name_custom = custom_image_name_pattern.format(image_name=image_name)
+            
+            cmd = f'docker tag {image_name_custom} {registry_url}/{registry_namespace}/{image_name_custom}'
+            print(f'Executing command: {cmd}')
+            subprocess.run(cmd,shell=True)
+            
             print(f'Pushing custom image {image_name_custom} based on {image_name}')
             
             cmd = f'docker push {registry_url}/{registry_namespace}/{image_name_custom} {docker_push_args}'
