@@ -79,17 +79,17 @@ python cli_ws_image.py custom register --jupyterlab --dry-run
 python cli_ws_image.py custom register --jupyter-all --dry-run
 python cli_ws_image.py custom register --jupyter-all -py 3.8 -v 4.0.6 --dry-run
 
-python cli_ws_image.py custom register --jupyter-all -c ws-applications-408-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.0.8 -v 4.0.8 --dry-run
-python cli_ws_image.py custom register --gpu --jupyter-all -c ws-applications-408-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.0.8 -v 4.0.8 --dry-run
+python cli_ws_image.py custom register --jupyter-all -r ws-applications-408-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.0.8 -v 4.0.8 --dry-run
+python cli_ws_image.py custom register --gpu --jupyter-all -r ws-applications-408-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.0.8 -v 4.0.8 --dry-run
 
-python cli_ws_image.py custom register --rstudio -c custom-407-{filename} -d "{display_name} (custom)" -i us.icr.io/custom-image-ws-applications/{image_name}-custom:16 -v 4.0.7 --dry-run
+python cli_ws_image.py custom register --rstudio -r custom-407-{filename} -d "{display_name} (custom)" -i us.icr.io/custom-image-ws-applications/{image_name}-custom:16 -v 4.0.7 --dry-run
 ```
 
 ## 4. Other commnds
 ### 4.1 list custom configs
 ```bash
-python cli_ws_image.py custom list -c ws-applications-{filename}
-python cli_ws_image.py custom list -c ws-applications-{filename} -v 4.0.6
+python cli_ws_image.py custom list -r ws-applications-{filename}
+python cli_ws_image.py custom list -r ws-applications-{filename} -v 4.0.6
 ```
 ### 4.2 view a specific config
 ```bash

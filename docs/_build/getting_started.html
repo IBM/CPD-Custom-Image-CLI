@@ -274,7 +274,7 @@ python cli_ws_image.py custom push --image-name wml-deployment-runtime-py39-1-cu
 <li><p>You may use the flag <code class="docutils literal notranslate"><span class="pre">--dry-run</span></code> to test the command and assess the generated json file, without really adding it to Watson Studio’s runtime definitions.</p></li>
 <li><p>Use argument <code class="docutils literal notranslate"><span class="pre">--cpd-version</span></code> or <code class="docutils literal notranslate"><span class="pre">-v</span></code> if the Cloud Pak for Data cluster is not on the latest version. This information is used to get all the candidate runtime definitions for this version.</p></li>
 <li><p>Use argument <code class="docutils literal notranslate"><span class="pre">--python-version</span></code> or <code class="docutils literal notranslate"><span class="pre">-py</span></code> if there are multiple candidate runtime definitions for this Cloud Pak for Data version (usually each corresponds to a different python version), and you want to register a custom image for only a specific python version.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--config-filename-pattern</span></code> or <code class="docutils literal notranslate"><span class="pre">-c</span></code>: used to provide a filename pattern for each final config file (one for each final candidate runtime definitions). By default it is <code class="docutils literal notranslate"><span class="pre">custom-{filename}</span></code>, where <code class="docutils literal notranslate"><span class="pre">{filename}</span></code> refers to the original config filename. Note that <strong><code class="docutils literal notranslate"><span class="pre">{filename}</span></code> has to be at the end of the pattern</strong> (do not add anything after it).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--runtime-filename-pattern</span></code> or <code class="docutils literal notranslate"><span class="pre">-c</span></code>: used to provide a filename pattern for each final config file (one for each final candidate runtime definitions). By default it is <code class="docutils literal notranslate"><span class="pre">custom-{filename}</span></code>, where <code class="docutils literal notranslate"><span class="pre">{filename}</span></code> refers to the original config filename. Note that <strong><code class="docutils literal notranslate"><span class="pre">{filename}</span></code> has to be at the end of the pattern</strong> (do not add anything after it).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--display-name-pattern</span></code> or <code class="docutils literal notranslate"><span class="pre">d</span></code>: used to provide a display name pattern in each final config file. By default it is <code class="docutils literal notranslate"><span class="pre">{display_name}</span> <span class="pre">(custom)</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--image-name-pattern</span></code> or <code class="docutils literal notranslate"><span class="pre">-i</span></code>: used to provide an image name pattern for each custom image. By default it is <code class="docutils literal notranslate"><span class="pre">us.icr.io/custom-image/{image_name}-custom:2</span></code>, where <code class="docutils literal notranslate"><span class="pre">{image_name}</span></code> refers to the original image name of the base image, similar to the previous commands.</p></li>
 </ul>
@@ -285,11 +285,11 @@ python cli_ws_image.py custom push --image-name wml-deployment-runtime-py39-1-cu
 <li><p>You need to specify one of <code class="docutils literal notranslate"><span class="pre">--jupyter</span></code> (to generate config for jupyter notebook runtimes only), <code class="docutils literal notranslate"><span class="pre">--jupyterlab</span></code> (to generate config for jupyterlab runtimes only), or <code class="docutils literal notranslate"><span class="pre">--jupyter-all</span></code> (to generate config for both jupyter notebook and jupyterlab runtimes).</p></li>
 </ul>
 <p>The command looks like the following:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --jupyter-all -c &lt;config-filename-pattern&gt; -d &lt;display-name-pattern&gt; -i &lt;image-name-pattern&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --jupyter-all -r &lt;runtime-filename-pattern&gt; -d &lt;display-name-pattern&gt; -i &lt;image-name-pattern&gt;
 </pre></div>
 </div>
 <p>For example:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --jupyter-all -c ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --jupyter-all -r ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8
 </pre></div>
 </div>
 </div>
@@ -300,11 +300,11 @@ python cli_ws_image.py custom push --image-name wml-deployment-runtime-py39-1-cu
 <li><p>You need to specify <code class="docutils literal notranslate"><span class="pre">--rstudio</span></code>.</p></li>
 </ul>
 <p>The command looks like the following:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --rstudio -c &lt;config-filename-pattern&gt; -d &lt;display-name-pattern&gt; -i &lt;image-name-pattern&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --rstudio -r &lt;runtime-filename-pattern&gt; -d &lt;display-name-pattern&gt; -i &lt;image-name-pattern&gt;
 </pre></div>
 </div>
 <p>For example:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --rstudio -c custom-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (custom)&quot;</span> -i us.icr.io/cpd-custom-image/<span class="o">{</span>image_name<span class="o">}</span>-custom:23 -v <span class="m">4</span>.0.8
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom register --rstudio -r custom-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (custom)&quot;</span> -i us.icr.io/cpd-custom-image/<span class="o">{</span>image_name<span class="o">}</span>-custom:23 -v <span class="m">4</span>.0.8
 </pre></div>
 </div>
 </div>

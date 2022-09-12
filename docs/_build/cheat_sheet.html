@@ -178,10 +178,10 @@ python cli_ws_image.py custom register --jupyterlab --dry-run
 python cli_ws_image.py custom register --jupyter-all --dry-run
 python cli_ws_image.py custom register --jupyter-all -py <span class="m">3</span>.8 -v <span class="m">4</span>.0.6 --dry-run
 
-python cli_ws_image.py custom register --jupyter-all -c ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8 --dry-run
-python cli_ws_image.py custom register --gpu --jupyter-all -c ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8 --dry-run
+python cli_ws_image.py custom register --jupyter-all -r ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8 --dry-run
+python cli_ws_image.py custom register --gpu --jupyter-all -r ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8 --dry-run
 
-python cli_ws_image.py custom register --rstudio -c custom-407-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (custom)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-custom:16 -v <span class="m">4</span>.0.7 --dry-run
+python cli_ws_image.py custom register --rstudio -r custom-407-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (custom)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-custom:16 -v <span class="m">4</span>.0.7 --dry-run
 </pre></div>
 </div>
 </div>
@@ -189,8 +189,8 @@ python cli_ws_image.py custom register --rstudio -c custom-407-<span class="o">{
 <h2>4. Other commnds<a class="headerlink" href="#other-commnds" title="Permalink to this heading"></a></h2>
 <div class="section" id="list-custom-configs">
 <h3>4.1 list custom configs<a class="headerlink" href="#list-custom-configs" title="Permalink to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom list -c ws-applications-<span class="o">{</span>filename<span class="o">}</span>
-python cli_ws_image.py custom list -c ws-applications-<span class="o">{</span>filename<span class="o">}</span> -v <span class="m">4</span>.0.6
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python cli_ws_image.py custom list -r ws-applications-<span class="o">{</span>filename<span class="o">}</span>
+python cli_ws_image.py custom list -r ws-applications-<span class="o">{</span>filename<span class="o">}</span> -v <span class="m">4</span>.0.6
 </pre></div>
 </div>
 </div>

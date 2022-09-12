@@ -161,7 +161,7 @@ Note that:
 - You may use the flag `--dry-run` to test the command and assess the generated json file, without really adding it to Watson Studio's runtime definitions.
 - Use argument `--cpd-version` or `-v` if the Cloud Pak for Data cluster is not on the latest version. This information is used to get all the candidate runtime definitions for this version.
 - Use argument `--python-version` or `-py` if there are multiple candidate runtime definitions for this Cloud Pak for Data version (usually each corresponds to a different python version), and you want to register a custom image for only a specific python version.
-- `--config-filename-pattern` or `-c`: used to provide a filename pattern for each final config file (one for each final candidate runtime definitions). By default it is `custom-{filename}`, where `{filename}` refers to the original config filename. Note that **`{filename}` has to be at the end of the pattern** (do not add anything after it).
+- `--runtime-filename-pattern` or `-c`: used to provide a filename pattern for each final config file (one for each final candidate runtime definitions). By default it is `custom-{filename}`, where `{filename}` refers to the original config filename. Note that **`{filename}` has to be at the end of the pattern** (do not add anything after it).
 - `--display-name-pattern` or `d`: used to provide a display name pattern in each final config file. By default it is `{display_name} (custom)`. 
 - `--image-name-pattern` or `-i`: used to provide an image name pattern for each custom image. By default it is `us.icr.io/custom-image/{image_name}-custom:2`, where `{image_name}` refers to the original image name of the base image, similar to the previous commands.
 
@@ -172,12 +172,12 @@ Special arguments to use:
 
 The command looks like the following:
 ```bash
-python cli_ws_image.py custom register --jupyter-all -c <config-filename-pattern> -d <display-name-pattern> -i <image-name-pattern>
+python cli_ws_image.py custom register --jupyter-all -r <runtime-filename-pattern> -d <display-name-pattern> -i <image-name-pattern>
 ```
 
 For example:
 ```bash
-python cli_ws_image.py custom register --jupyter-all -c ws-applications-408-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.0.8 -v 4.0.8
+python cli_ws_image.py custom register --jupyter-all -r ws-applications-408-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.0.8 -v 4.0.8
 ```
 
 ### 3.2 Rstudio
@@ -187,12 +187,12 @@ Special arguments to use:
 
 The command looks like the following:
 ```bash
-python cli_ws_image.py custom register --rstudio -c <config-filename-pattern> -d <display-name-pattern> -i <image-name-pattern>
+python cli_ws_image.py custom register --rstudio -r <runtime-filename-pattern> -d <display-name-pattern> -i <image-name-pattern>
 ```
 
 For example:
 ```bash
-python cli_ws_image.py custom register --rstudio -c custom-408-{filename} -d "{display_name} (custom)" -i us.icr.io/cpd-custom-image/{image_name}-custom:23 -v 4.0.8
+python cli_ws_image.py custom register --rstudio -r custom-408-{filename} -d "{display_name} (custom)" -i us.icr.io/cpd-custom-image/{image_name}-custom:23 -v 4.0.8
 ```
 
 ## Step 4. Test New Environment
