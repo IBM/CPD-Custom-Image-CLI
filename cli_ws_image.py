@@ -14,6 +14,7 @@ import subprocess
 import json
 import numpy as np
 import re
+import copy
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -32,7 +33,7 @@ BASE_URL = os.getenv('CPD_BASE_URL',os.getenv('RUNTIME_ENV_APSX_URL'))
 
 HEADERS_GET = {'authorization':'Bearer {access_token}'}
 
-CPD_VERSION_LATEST = '4.5.1'
+CPD_VERSION_LATEST = '4.5.2'
 
 VERSION = '1.1'
 
@@ -74,8 +75,10 @@ def list(cpu,gpu,a,rstudio,service,export_fn,export_format,cpd_version,overwrite
         click.echo(f"{color('Error','error')}: The value for argument {color('service','error')} should be one of ['ws', 'wml'].")
         sys.exit(1)
 
-    cpd_version = CPD_VERSION_LATEST if cpd_version is None else cpd_version
-    click.echo(f"{color('cpd_version')} is not specified, using the latest version {color(CPD_VERSION_LATEST)}\n")
+    if cpd_version is None:
+        click.echo(f"{color('cpd_version')} is not specified, using the latest version {color(CPD_VERSION_LATEST)}\n")
+        cpd_version = CPD_VERSION_LATEST
+    
     flag_df_config = False # whether the downloaded df contains runtime config files that need to be processed further, or the images info is already listed
         
     if service == 'wml':
@@ -206,9 +209,9 @@ def custom():
 
 
 @custom.command()
-@click.option('--pattern','-p','-c',type=str,default='ws-applications-{filename}',help='config file name pattern, where the original config filename which the custom file is based on indicates in {filename}')
+@click.option('--runtime-filename-pattern','-r',type=str,default='ws-applications-{filename}',help='config file name pattern, where the original config filename which the custom file is based on indicates in {filename}')
 @click.option('--cpd-version','-v',type=str,default=None,help='a specific CPD version; if not specified, information of the latest version is pulled')
-def list(pattern,cpd_version):
+def list(runtime_filename_pattern,cpd_version):
     """
     List custom runtime configurations with known name patterns
     """
@@ -216,18 +219,18 @@ def list(pattern,cpd_version):
     print(df_runtime)
     df_runtime = df_runtime[df_runtime['JSON configuration file'].str.contains('-py')]
     fns = df_runtime['JSON configuration file'].tolist()
-    fns_custom = [pattern.format(filename=fn) for fn in fns]
+    fns_custom = [runtime_filename_pattern.format(filename=fn) for fn in fns]
     
     d_config = get_config_files(fns_custom,BASE_URL,USERNAME,APIKEY,USER_ACCESS_TOKEN,HEADERS_GET)
     
     if len(d_config) == 0:
-        click.echo(f"\nNo custom config file with pattern {color(pattern)}.")
+        click.echo(f"\nNo custom config file with pattern {color(runtime_filename_pattern)}.")
         sys.exit(1)
                 
     df = pd.DataFrame({'filename':d_config.keys(),
                        'image':[config['image'] for config in d_config.values()]})
     
-    click.echo(f'\nWS custom config files on CPD {color(BASE_URL)} with pattern {color(pattern)}, selected fields:')
+    click.echo(f'\nWS custom config files on CPD {color(BASE_URL)} with pattern {color(runtime_filename_pattern)}, selected fields:')
     print(df)
 
 @custom.command()
@@ -380,13 +383,16 @@ def push(base_image_list, custom_image_name_pattern, image_name,
 @click.option('--python-version','-py',type=str,default=None,help='a specific python version as basis; if not specified, custom config will be generated for all available WS python versions')
 @click.option('--service',type=str,default='ws',help='the service to list the base mage for; currently supports either ws or wml')
 @click.option('--storage-volume',type=str,default='cc-home-pvc',help='the storage volume display name for WML software specification, which mounts an existing pvc called cc-home-pvc')
-@click.option('--config-filename-pattern','-c',type=str,default='custom-{filename}',help='config file name pattern, where the original config filename which the custom file is based on is referred to as {filename}; default value: custom-{filename}')
+@click.option('--framework',type=str,default=None,help='framework in WML images; default to the one used for regular cpu inference; if specified, the value should be one of autoai-kb, autoai-ts, pytorch-onnx, cuda, do, tensorflow')
+@click.option('--runtime-filename-pattern','-r',type=str,default='custom-{filename}',help='runtime config file name pattern, where the original config filename which the custom file is based on is referred to as {filename}; default value: custom-{filename}')
 @click.option('--display-name-pattern','-d',type=str,default='{display_name} (custom)',help='display name pattern, where the original display name which the custom file is based on is referred to as {display_name}; default value: {display_name} (custom)')
 @click.option('--image-name-pattern','-i',type=str,default='us.icr.io/custom-image/{image_name}-custom:2',help='image name pattern, where the original image name which the custom file is based on is referred to as {image_name}; default value: us.icr.io/custom-image/{image_name}-custom:2')
 @click.option('--cpd-version','-v',type=str,default=None,help='a specific CPD version used to pull the default config list from doc; if not specified, information of the latest version is pulled')
 @click.option('--dry-run',is_flag=True,help='performing all the steps except for the last step to register the new custom config in WS')
-def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,service,storage_volume,
-           config_filename_pattern,display_name_pattern,image_name_pattern,cpd_version,dry_run):
+def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,
+             service,
+             storage_volume, framework,
+            runtime_filename_pattern,display_name_pattern,image_name_pattern,cpd_version,dry_run):
     """
     List custom runtime configurations with known name patterns.
     For WS environments, you may specify flags such as gpu, jupyter, jupyterlab, jupyter_all, or rstudio.
@@ -395,15 +401,126 @@ def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,service,s
     if service not in ['ws','wml']:
         click.echo(f"{color('Error','error')}: The value for argument {color('service','error')} should be one of ['ws', 'wml'].")
         sys.exit(1)
-        
+
+    frameworks = ['autoai-kb', 'autoai-ts', 'pytorch-onnx', 'cuda', 'do', 'tensorflow']
+    if framework is not None and framework not in frameworks:
+        click.echo(f"{color('Error','error')}: The value for argument {color('framework','error')} should be one of {frameworks}.")
+        sys.exit(1)
+    
+    if not cpd_version.startswith('4.5.') and not cpd_version.startswith('4.0.'):
+        click.echo(f"{color('Error','error')}: {color('cpd-version','error')} should be either on 4.5 or 4.0 (e.g., 4.5.2).")
+        sys.exit(1)
+
     if service == 'wml':
         if gpu or jupyter or jupyterlab or jupyter_all or rstudio:
             click.echo(f"{color('Error','error')}: Service {color('wml','error')} supports python cpu environments for online & batch deployments (which yield a REST API), where only CPU inference is allowed. As a result you cannot specify flags such as \"--gpu\" or \"--rstudio\". \nIf you intend to run GPU inference through a notebook/script job deployment in WML space, the underlying environments and all the steps are the same as WS environments, as in this case WML space leverages WS runtimes, so please use \"--service ws\" instead.")
             sys.exit(1)
         
+        from cpd_sdk_plus import storage_volume_utils as sv
+        if cpd_version.startswith('4.5.'):
+            if '::' not in storage_volume:
+                click.echo(f"{color('Error','error')}: storage volume name {color(storage_volume,'error')} does not have the namespace specified (example name expected: cpd-instance::cc-home-pvc-sv); check your storage volume name")
+                sys.exit(1)
+
+        # 1. check if storage volume exists
+        click.echo(f"Checking whether storage volume {color(storage_volume)} exists on cluster {color(BASE_URL)}...")
+        d_storage_volume = sv.list_storage_volumes()
+        if storage_volume in d_storage_volume.keys():
+            click.echo(f"Found! {d_storage_volume[storage_volume]}")
+        else:
+            click.echo(f"{color('Error','error')}: Cannot find storage volume {color(storage_volume,'error')}. Please manually create a storage volume in CPD that points to an existing PVC cc-home-pvc, then provide the storage volume name to the command accordingly. Support for auto-creation will be implemented soon.")
+            sys.exit(1)
+        
+        # 2. determine runtime config filename to be used as the base
         df_runtime = download_reference(cpd_version,service)
-        df_runtime['image'] = 'cp.icr.io/cp/cpd/' + df_runtime['Image name|base-image-name'] + ':' + df_runtime['Image version|base-image-version']
-        print(df_runtime)
+        if cpd_version.startswith('4.5.'):
+            df_runtime = df_runtime[df_runtime['Image description'].str.contains('Python')]
+            df_runtime['py_v'] = df_runtime['JSON configuration file'].apply(lambda x: [e[2:] for e in x.split('-') if e.startswith('py')][0])
+            df_runtime = df_runtime.rename(columns={'JSON configuration file':'filename'})
+        else:
+            df_runtime['image'] = 'cp.icr.io/cp/cpd/' + df_runtime['Image name|base-image-name'] + ':' + df_runtime['Image version|base-image-version']
+            df_runtime['py_v'] = df_runtime['Image name|base-image-name'].apply(lambda x: [e[2:] for e in x.split('-') if e.startswith('py')][0])
+            df_runtime['filename'] = df_runtime['py_v'].apply(lambda x: f'wml-deployment-runtime-py{x}-server.json')
+            #print(df_runtime)
+
+        fns_runtime = df_runtime['filename'].values.tolist()
+
+        # 3. get all existing software specification files
+        dir_sv_software_spec = '_global_/config/environments/software-specifications'
+        l_files = sv.list_files(path=dir_sv_software_spec,volume_display_name=storage_volume)
+        l_filenames = [x['path'] for x in l_files]
+
+        # 4. get all needed runtime config files
+        d_config = get_config_files(fns_runtime,BASE_URL,USERNAME,APIKEY,USER_ACCESS_TOKEN,HEADERS_GET)
+
+        # 4. loop through all custom images (proxy: runtimes)
+        d_config_new = {}
+        for fn_runtime, py_v in zip(df_runtime['filename'],df_runtime['py_v']):
+            
+            # 4.1 find the matching software spec
+            if py_v in ['36','37','38']:
+                fns_software_spec = [x for x in l_filenames if x.startswith(f'python{py_v}')]
+            elif py_v in ['39']:
+                py_v_with_dot = py_v[0] + '.' + py_v[1:]
+                fns_software_spec = [x for x in l_filenames if py_v_with_dot in x]
+            else:
+                click.echo(f"{color('Error','error')}: python version {py_v} is not supported by this CLI.")
+                sys.exit(1)
+            
+            # filter the resulting software specs
+            flag_regular = False if isinstance(framework,str) else True
+            fns_software_spec_filtered = copy.deepcopy(fns_software_spec) if flag_regular else []
+            for x in fns_software_spec:  
+                if not flag_regular and framework in x:
+                        fns_software_spec_filtered.append(x)
+                else:
+                    if x.endswith('-edt.json') or 'spark' in x: # edt is for wmla, spark env is not tested in this tool
+                        fns_software_spec_filtered.remove(x)
+
+                    for y in frameworks:
+                        if y in x:
+                            try:
+                                fns_software_spec_filtered.remove(x)
+                            except:
+                                pass # it might have already been removed from the filtered list
+                            break
+            click.echo(f"{color(len(fns_software_spec_filtered))} matched software specs: {color(fns_software_spec_filtered)}")
+
+            if len(fns_software_spec_filtered) != 1:
+                click.echo(f"{color('Error','error')}: The number of matched software spec is not 1. This is not expected.")
+                sys.exit(1)
+            
+            fn_software_spec = fns_software_spec_filtered[0]
+
+            # 4.2 fetch the matching software spec
+            os.makedirs('./tmp',exist_ok=True)
+            sv.download(dir_sv_software_spec+'/'+fn_software_spec,volume_display_name=storage_volume,
+                        path_target='./tmp/'+fn_software_spec)
+            # 4.3 create a new software spec based on the matching one
+
+            # 4.4 upload the new software spec to the storage volume
+
+            # 4.5 fetch the matching runtime config
+
+            # 4.6 create a new runtime config based on the matching one
+            image_name = d_config[fn_runtime]['image'].split('@')[0].split('/')[-1]
+            image_name_new = image_name_pattern.format(image_name=image_name)
+            config = {
+                    "displayName": display_name_pattern.format(display_name=d_config[fn_runtime]['displayName']),
+                    "description": "WML custom image",
+                    "author": "",
+                    "tested": True,
+                    "isService": True,
+                    "features": ["wml"],
+                    "runtimeType": "wml",
+                    "software_specification_name": fn_software_spec[:-5], # remove .json
+                    "image": image_name_new
+                }
+            
+            fn_new = runtime_filename_pattern.format(filename=fn_runtime)
+            d_config_new[fn_new] = config
+
+    # service == "ws"
     else:
         if not jupyter and not jupyterlab and not jupyter_all and not rstudio:
             click.echo(f"{color('Error','error')}: Specify at least one flag (--jupyter, --jupyterlab, --jupyter-all, --rstudio).")
@@ -457,7 +574,7 @@ def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,service,s
         d_config_new = {}
         for fn,config in d_config.items():
             try:
-                fn_new = config_filename_pattern.format(filename=fn)
+                fn_new = runtime_filename_pattern.format(filename=fn)
 
                 image_name = config['image'].split('@')[0].split('/')[-1]
                 image_name_new = image_name_pattern.format(image_name=image_name)
@@ -477,19 +594,19 @@ def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,service,s
             except Exception as e:
                 click.echo(f"{color('Error','error')}: {e}")
         
-        # 4. write te custom config files to disk
-        os.makedirs('./tmp',exist_ok=True)
-        for fn,config in d_config_new.items():
-            with open(f'./tmp/{fn}','w') as f:
-                print("Writing new config to file ./tmp/" + fn)
-                json.dump(config, f)
-        
-        # 5. register the custom config file to WS
-        if dry_run:
-            click.echo('Dry run is finished. You can check the generated custom config files.')
-            sys.exit(0)
-        else:
-            put_config_files(['./tmp/'+fn for fn in d_config_new.keys()], BASE_URL, USERNAME, APIKEY, USER_ACCESS_TOKEN, HEADERS_GET)
+    # 4. write te custom config files to disk
+    os.makedirs('./tmp',exist_ok=True)
+    for fn,config in d_config_new.items():
+        with open(f'./tmp/{fn}','w') as f:
+            print("Writing new config to file ./tmp/" + fn)
+            json.dump(config, f)
+    
+    # 5. register the custom config file to WS
+    if dry_run:
+        click.echo('Dry run is finished. You can check the generated custom config files.')
+        sys.exit(0)
+    else:
+        put_config_files(['./tmp/'+fn for fn in d_config_new.keys()], BASE_URL, USERNAME, APIKEY, USER_ACCESS_TOKEN, HEADERS_GET)
 
 
 # -------- cli group: pkg --------
@@ -666,13 +783,13 @@ def download_reference(cpd_version,service='ws',rstudio=False):
             # keep only the amd version tag
             df_runtime['Image version|base-image-version'] = df_runtime['Image version|base-image-version'].apply(lambda x: [v for v in x.split('|') if 'amd' in v][0])
         elif cpd_version.startswith('4.5.'):
-            if cpd_version.endswith('1'):
+            if cpd_version == CPD_VERSION_LATEST:
                 url_doc = 'https://www.ibm.com/docs/en/cloud-paks/cp-data/4.5.x?topic=pbci-downloading-runtime-configuration'
-                click.echo(f'WS config files for CPD 4.0 from official doc {color(url_doc)}:')
+                click.echo(f'WS config files for CPD 4.5 from official doc {color(url_doc)}:')
                 dfs = pd.read_html(url_doc)
                 df_runtime = dfs[0]
             else:
-                # only 4.5.1 is supported as I haven't found the historical refreshes for 4.5.x
+                # only 4.5.2 is supported as I haven't found the historical refreshes for 4.5.x
                 click.echo(f"{color('Error','error')}: this tool does not support cpd version {cpd_version}\nContact the author if you have a need.")
                 sys.exit(1)
         else:
@@ -729,7 +846,7 @@ def download_reference(cpd_version,service='ws',rstudio=False):
                     click.echo(f"{color('Error','error')}: {color(len(dfs_matched),'error')} matched table(s) (!=3) found for cpd version {cpd_version}\nTry the link above and make sure the tables for runtime configuration files are there.")
                     sys.exit(1)
         elif cpd_version.startswith('4.5.'):
-            if cpd_version.endswith('.1'):
+            if cpd_version == CPD_VERSION_LATEST:
                 url_doc = 'https://www.ibm.com/docs/en/cloud-paks/cp-data/4.5.x?topic=image-downloading-runtime-configuration'
                 click.echo(f'WS config files for CPD 4.5 from official doc {color(url_doc)}:')
                 dfs = pd.read_html(url_doc)
@@ -738,7 +855,7 @@ def download_reference(cpd_version,service='ws',rstudio=False):
                 else:
                     df_runtime = dfs[1]
             else:
-                # only 4.5.1 is supported as I haven't found the historical refreshes for 4.5.x
+                # only 4.5.2 is supported as I haven't found the historical refreshes for 4.5.x
                 click.echo(f"{color('Error','error')}: this tool does not support cpd version {cpd_version}\nContact the author if you have a need.")
                 sys.exit(1)
         else:
@@ -747,7 +864,7 @@ def download_reference(cpd_version,service='ws',rstudio=False):
 
     return df_runtime
 
-def get_config_files(fns,BASE_URL,USERNAME,APIKEY,USER_ACCESS_TOKEN,HEADERS_GET):
+def get_config_files(fns,BASE_URL,USERNAME,APIKEY,USER_ACCESS_TOKEN,HEADERS_GET,return_raw=False):
     """
     Download the runtime config files from the cluster to be used as basis for a custom one.
     
@@ -760,11 +877,14 @@ def get_config_files(fns,BASE_URL,USERNAME,APIKEY,USER_ACCESS_TOKEN,HEADERS_GET)
     for fn in fns:
         url = f"{BASE_URL}/zen-data/v1/volumes/files/{urllib.parse.quote_plus(f'/_global_/config/.runtime-definitions/ibm/{fn}')}"
         r = requests.get(url, headers=headers, verify=False)
-        if r.status_code == 200:
-            config = r.json()
-            d_config[fn] = config#['image']
+        if return_raw:
+            d_config[fn] = r
         else:
-            print(r.text)
+            if r.status_code == 200:
+                config = r.json()
+                d_config[fn] = config#['image']
+            else:
+                print(r.text)
     return d_config
 
 
