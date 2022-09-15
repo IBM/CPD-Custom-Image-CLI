@@ -17,6 +17,7 @@ It streamlines the process of creating a custom image for Cloud Pak for Data run
 **Doc**: https://ibm.github.io/CPD-Custom-Image-CLI/
 
 ## Important notes
+0 - **For 4.5.x, only the latest version of doc is supported (both WS and WML) because I haven't found a way to grab historical refreshes. As of 4.5.2 (2022 Aug release) you can always use `--cpd-version 4.5.2` even if you are on CPD 4.5.1 or 4.5.0, because the doc is used to get the compatible runtime names which fortunately hasn't changed in these three versions. Once the runtime files are located, the actual image name the tool extracts and uses reflect your system version, regardless of what you put in `--cpd-version`.**
 
 1 - The current release is implemented and tested only for Cloud Pak for Data **4.0.x**. If you are on 3.5.x, it does not apply because the way to fetch base images is changed in 4.0.x. If you are on 4.5.x, this CLI may work.
 
