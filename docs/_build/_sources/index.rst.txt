@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Custom Image CLI for Runtimes in Cloud Pak for Data 
-====================================
+========================================================================
 
 ************************************************************************
 CLI to create and use custom image runtimes
@@ -21,8 +21,8 @@ Currently it supports the following services:
 #. Watson Studio
   * Jupyter notebook and Jupyter Lab environments in Python
   * Rstudio environments
-
-The support for Watson Machine Learning is not fully implemented but should be there soon. Stay tunned!
+#. Watson Machine Learning
+  * Python online deployment environments
 
 Important notes
 ###############
@@ -31,7 +31,7 @@ Important notes
 
 2 - Gathering information and registering custom images are specific to Cloud Pak for Data, while building and pushing the custom image can be easily extended to support arbitrary situation.
 
-3 - You need to know the key to access the Cloud Pak for Data base image repository (**cp.icr.io**), or have access to the OpenShift backend of any 4.0.x Cloud Pak for Data cluster you are building a custom image for from where you will be able to extract the secrets according to the :doc:`Getting Started Guide <getting_started>` in this doc.
+3 - You need to know the key to access the Cloud Pak for Data base image repository (**cp.icr.io**), or have access to the OpenShift backend of any 4.0.x Cloud Pak for Data cluster you are building a custom image for from where you will be able to extract the secrets according to the :doc:`Getting Started Guide <getting_started_WS>` in this doc.
 
 4 - R Jupyter environment is not tested or supported by this CLI as usually R users prefer Rstudio. Contact the author if there is a need.
 
@@ -45,7 +45,8 @@ More Links
    :maxdepth: 1
    :caption: Contents
 
-   Getting started: Watson Studio <getting_started>
+   Getting started: Watson Studio <getting_started_WS>
+   Getting started: Watson Machine Learning <getting_started_WML>
    Retrieve or Register Container Registry Secrets <cluster_secrets>
    
 .. toctree::

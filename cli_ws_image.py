@@ -384,6 +384,8 @@ def push(base_image_list, custom_image_name_pattern, image_name,
 @click.option('--service',type=str,default='ws',help='the service to list the base mage for; currently supports either ws or wml')
 @click.option('--storage-volume',type=str,default='cc-home-pvc',help='the storage volume display name for WML software specification, which mounts an existing pvc called cc-home-pvc')
 @click.option('--framework',type=str,default=None,help='framework in WML images; default to the one used for regular cpu inference; if specified, the value should be one of autoai-kb, autoai-ts, pytorch-onnx, cuda, do, tensorflow')
+@click.option('--base-software-spec','-s',type=str,default=None,help='base software spec to be used, for example runtime22.1-py3.9; if not specified, it will try to automatically determine one')
+@click.option('--software-spec-pattern','-ss',type=str,default=None,help='software spec name pattern, where the original software spec filename is referred to as {filename} and image name referred to as {image_name}')
 @click.option('--runtime-filename-pattern','-r',type=str,default='custom-{filename}',help='runtime config file name pattern, where the original config filename which the custom file is based on is referred to as {filename}; default value: custom-{filename}')
 @click.option('--display-name-pattern','-d',type=str,default='{display_name} (custom)',help='display name pattern, where the original display name which the custom file is based on is referred to as {display_name}; default value: {display_name} (custom)')
 @click.option('--image-name-pattern','-i',type=str,default='us.icr.io/custom-image/{image_name}-custom:2',help='image name pattern, where the original image name which the custom file is based on is referred to as {image_name}; default value: us.icr.io/custom-image/{image_name}-custom:2')
@@ -391,7 +393,7 @@ def push(base_image_list, custom_image_name_pattern, image_name,
 @click.option('--dry-run',is_flag=True,help='performing all the steps except for the last step to register the new custom config in WS')
 def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,
              service,
-             storage_volume, framework,
+             storage_volume, framework, base_software_spec, software_spec_pattern,
             runtime_filename_pattern,display_name_pattern,image_name_pattern,cpd_version,dry_run):
     """
     List custom runtime configurations with known name patterns.
@@ -453,58 +455,77 @@ def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,
         # 4. get all needed runtime config files
         d_config = get_config_files(fns_runtime,BASE_URL,USERNAME,APIKEY,USER_ACCESS_TOKEN,HEADERS_GET)
 
-        # 4. loop through all custom images (proxy: runtimes)
+        # 5. loop through all custom images (proxy: runtimes)
         d_config_new = {}
         for fn_runtime, py_v in zip(df_runtime['filename'],df_runtime['py_v']):
-            
-            # 4.1 find the matching software spec
-            if py_v in ['36','37','38']:
-                fns_software_spec = [x for x in l_filenames if x.startswith(f'python{py_v}')]
-            elif py_v in ['39']:
-                py_v_with_dot = py_v[0] + '.' + py_v[1:]
-                fns_software_spec = [x for x in l_filenames if py_v_with_dot in x]
-            else:
-                click.echo(f"{color('Error','error')}: python version {py_v} is not supported by this CLI.")
-                sys.exit(1)
-            
-            # filter the resulting software specs
-            flag_regular = False if isinstance(framework,str) else True
-            fns_software_spec_filtered = copy.deepcopy(fns_software_spec) if flag_regular else []
-            for x in fns_software_spec:  
-                if not flag_regular and framework in x:
-                        fns_software_spec_filtered.append(x)
-                else:
-                    if x.endswith('-edt.json') or 'spark' in x: # edt is for wmla, spark env is not tested in this tool
-                        fns_software_spec_filtered.remove(x)
-
-                    for y in frameworks:
-                        if y in x:
-                            try:
-                                fns_software_spec_filtered.remove(x)
-                            except:
-                                pass # it might have already been removed from the filtered list
-                            break
-            click.echo(f"{color(len(fns_software_spec_filtered))} matched software specs: {color(fns_software_spec_filtered)}")
-
-            if len(fns_software_spec_filtered) != 1:
-                click.echo(f"{color('Error','error')}: The number of matched software spec is not 1. This is not expected.")
-                sys.exit(1)
-            
-            fn_software_spec = fns_software_spec_filtered[0]
-
-            # 4.2 fetch the matching software spec
-            os.makedirs('./tmp',exist_ok=True)
-            sv.download(dir_sv_software_spec+'/'+fn_software_spec,volume_display_name=storage_volume,
-                        path_target='./tmp/'+fn_software_spec)
-            # 4.3 create a new software spec based on the matching one
-
-            # 4.4 upload the new software spec to the storage volume
-
-            # 4.5 fetch the matching runtime config
-
-            # 4.6 create a new runtime config based on the matching one
             image_name = d_config[fn_runtime]['image'].split('@')[0].split('/')[-1]
             image_name_new = image_name_pattern.format(image_name=image_name)
+
+            # 5.1 find the matching software spec
+            if base_software_spec is not None:
+                fn_software_spec = base_software_spec + '.json'
+            else:
+                if py_v in ['36','37','38']:
+                    fns_software_spec = [x for x in l_filenames if x.startswith(f'python{py_v}')]
+                elif py_v in ['39']:
+                    py_v_with_dot = py_v[0] + '.' + py_v[1:]
+                    fns_software_spec = [x for x in l_filenames if py_v_with_dot in x]
+                else:
+                    click.echo(f"{color('Error','error')}: python version {py_v} is not supported by this CLI.")
+                    sys.exit(1)
+                
+                # filter the resulting software specs
+                flag_regular = False if isinstance(framework,str) else True
+                fns_software_spec_filtered = copy.deepcopy(fns_software_spec) if flag_regular else []
+                for x in fns_software_spec:  
+                    if not flag_regular and framework in x:
+                            fns_software_spec_filtered.append(x)
+                    else:
+                        if x.endswith('-edt.json') or 'spark' in x: # edt is for wmla, spark env is not tested in this tool
+                            fns_software_spec_filtered.remove(x)
+
+                        for y in frameworks:
+                            if y in x:
+                                try:
+                                    fns_software_spec_filtered.remove(x)
+                                except:
+                                    pass # it might have already been removed from the filtered list
+                                break
+                click.echo(f"{color(len(fns_software_spec_filtered))} matched software specs: {color(fns_software_spec_filtered)}")
+
+                if len(fns_software_spec_filtered) != 1:
+                    click.echo(f"{color('Error','error')}: The number of matched software spec is not 1. This is not expected.")
+                    sys.exit(1)
+            
+                fn_software_spec = fns_software_spec_filtered[0]
+
+            # 5.2 fetch the matching software spec
+            os.makedirs('./tmp',exist_ok=True)
+            fn_software_spec_new = software_spec_pattern.format(filename=fn_software_spec,      image_name=image_name)
+            sv.download(dir_sv_software_spec+'/'+fn_software_spec,volume_display_name=storage_volume,
+                        path_target=f'./tmp/{fn_software_spec_new}')
+            
+            # 5.3 create a new software spec based on the matching one
+            software_spec = json.load(open(f'./tmp/{fn_software_spec_new}'))
+
+            # https://www.ibm.com/docs/en/cloud-paks/cp-data/4.5.x?topic=images-creating-new-base-software-specification
+            software_spec['metadata']['name'] = fn_software_spec_new[:-5] # remove the .json part
+            software_spec['entity']['software_specification']['built_in'] = False
+
+            display_name = software_spec['entity']['software_specification']['display_name']
+            display_name_new = display_name_pattern.format(display_name=display_name)
+            software_spec['entity']['software_specification']['display_name'] = display_name_new
+            
+            with open(f'./tmp/{fn_software_spec_new}','w') as f:
+                print("Writing new software spec to file ./tmp/" + fn_software_spec_new)
+                json.dump(software_spec, f)
+            
+            # 5.4 upload the new software spec to the storage volume
+            sv.upload(f'./tmp/{fn_software_spec_new}',volume_display_name=storage_volume,
+                      path_target=dir_sv_software_spec+'/'+fn_software_spec_new)
+
+            # 5.5 create a new runtime config based on the matching one
+            
             config = {
                     "displayName": display_name_pattern.format(display_name=d_config[fn_runtime]['displayName']),
                     "description": "WML custom image",
@@ -513,7 +534,7 @@ def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,
                     "isService": True,
                     "features": ["wml"],
                     "runtimeType": "wml",
-                    "software_specification_name": fn_software_spec[:-5], # remove .json
+                    "software_specification_name": fn_software_spec_new[:-5], # remove .json
                     "image": image_name_new
                 }
             

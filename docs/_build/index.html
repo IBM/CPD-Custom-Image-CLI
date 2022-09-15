@@ -18,7 +18,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Getting Started: Create Custom Images for Watson Studio (Cloud Pak for Data)" href="getting_started.html" /> 
+    <link rel="next" title="Getting Started: Create Custom Images for Watson Studio (Cloud Pak for Data)" href="getting_started_WS.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -38,7 +38,8 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started: Watson Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started_WS.html">Getting started: Watson Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started_WML.html">Getting started: Watson Machine Learning</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster_secrets.html">Retrieve or Register Container Registry Secrets</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Quick Examples</span></p>
@@ -89,12 +90,19 @@
 <li><p>Rstudio environments</p></li>
 </ul>
 </div></blockquote>
-<p>The support for Watson Machine Learning is not fully implemented but should be there soon. Stay tunned!</p>
+<ol class="arabic simple">
+<li><p>Watson Machine Learning</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>Python online deployment environments</p></li>
+</ul>
+</div></blockquote>
 <div class="section" id="important-notes">
 <h3>Important notes<a class="headerlink" href="#important-notes" title="Permalink to this heading"></a></h3>
 <p>1 - The current release is implemented and tested only for Cloud Pak for Data <strong>4.0.x</strong>. If you are on 3.5.x, it does not apply because the way to fetch base images is changed in 4.0.x. If you are on 4.5.x, this CLI may work.</p>
 <p>2 - Gathering information and registering custom images are specific to Cloud Pak for Data, while building and pushing the custom image can be easily extended to support arbitrary situation.</p>
-<p>3 - You need to know the key to access the Cloud Pak for Data base image repository (<strong>cp.icr.io</strong>), or have access to the OpenShift backend of any 4.0.x Cloud Pak for Data cluster you are building a custom image for from where you will be able to extract the secrets according to the <a class="reference internal" href="getting_started.html"><span class="doc">Getting Started Guide</span></a> in this doc.</p>
+<p>3 - You need to know the key to access the Cloud Pak for Data base image repository (<strong>cp.icr.io</strong>), or have access to the OpenShift backend of any 4.0.x Cloud Pak for Data cluster you are building a custom image for from where you will be able to extract the secrets according to the <a class="reference internal" href="getting_started_WS.html"><span class="doc">Getting Started Guide</span></a> in this doc.</p>
 <p>4 - R Jupyter environment is not tested or supported by this CLI as usually R users prefer Rstudio. Contact the author if there is a need.</p>
 </div>
 <div class="section" id="more-links">
@@ -106,7 +114,8 @@
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started: Watson Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started_WS.html">Getting started: Watson Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started_WML.html">Getting started: Watson Machine Learning</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster_secrets.html">Retrieve or Register Container Registry Secrets</a></li>
 </ul>
 </div>
@@ -124,7 +133,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="getting_started.html" class="btn btn-neutral float-right" title="Getting Started: Create Custom Images for Watson Studio (Cloud Pak for Data)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="getting_started_WS.html" class="btn btn-neutral float-right" title="Getting Started: Create Custom Images for Watson Studio (Cloud Pak for Data)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

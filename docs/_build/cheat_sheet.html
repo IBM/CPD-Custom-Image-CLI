@@ -38,7 +38,6 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started: Watson Studio</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster_secrets.html">Retrieve or Register Container Registry Secrets</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Quick Examples</span></p>
@@ -57,7 +56,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#other-commnds">4. Other commnds</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#list-custom-configs">4.1 list custom configs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#view-a-specific-config">4.2 view a specific config</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#list-packages-available-to-be-installed-using-microdnf">4.3 list packages available to be installed using microdnf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-packages-available-to-be-installed-using-microdnf-from-rpmfind">4.3 list packages available to be installed using microdnf from rpmfind</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#search-for-a-package-microdnf">4.4 search for a package (microdnf)</a></li>
 </ul>
 </li>
@@ -181,7 +180,7 @@ python cli_ws_image.py custom register --jupyter-all -py <span class="m">3</span
 python cli_ws_image.py custom register --jupyter-all -r ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8 --dry-run
 python cli_ws_image.py custom register --gpu --jupyter-all -r ws-applications-408-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (ws applications)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-ws-applications:4.0.8 -v <span class="m">4</span>.0.8 --dry-run
 
-python cli_ws_image.py custom register --rstudio -r custom-407-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (custom)&quot;</span> -i us.icr.io/custom-image-ws-applications/<span class="o">{</span>image_name<span class="o">}</span>-custom:16 -v <span class="m">4</span>.0.7 --dry-run
+python cli_ws_image.py custom register --service wml --storage-volume cpd-instance::cc-home-pvc-sv -s runtime22.1-py3.9 -ss custom-452-software-spec-<span class="o">{</span>image_name<span class="o">}</span>.json -r custom-452-<span class="o">{</span>filename<span class="o">}</span> -d <span class="s2">&quot;{display_name} (custom)&quot;</span> -i us.icr.io/cpd-custom-image/<span class="o">{</span>image_name<span class="o">}</span>-custom:4.5.2 -v <span class="m">4</span>.5.2 --dry-run
 </pre></div>
 </div>
 </div>
@@ -203,8 +202,8 @@ python cli_ws_image.py custom view --name ws-applications-jupyter-py39-server.js
 </pre></div>
 </div>
 </div>
-<div class="section" id="list-packages-available-to-be-installed-using-microdnf">
-<h3>4.3 list packages available to be installed using microdnf<a class="headerlink" href="#list-packages-available-to-be-installed-using-microdnf" title="Permalink to this heading"></a></h3>
+<div class="section" id="list-packages-available-to-be-installed-using-microdnf-from-rpmfind">
+<h3>4.3 list packages available to be installed using microdnf from rpmfind<a class="headerlink" href="#list-packages-available-to-be-installed-using-microdnf-from-rpmfind" title="Permalink to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># list only the channels</span>
 python cli_ws_image.py pkg list --channel-only
 

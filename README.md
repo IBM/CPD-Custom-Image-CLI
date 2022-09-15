@@ -4,7 +4,8 @@ This project provides a Python-based CLI tool to create and use custom images in
 - Watson Studio
   - Jupyter notebook and Jupyter Lab environments in Python
   - Rstudio environments
-- Watson Machine Learning (will be supported soon)
+- Watson Machine Learning
+  - Python online deployment environments
 
 It streamlines the process of creating a custom image for Cloud Pak for Data runtimes by wrapping the key steps into CLI commands, covering:
 1. gather the needed information such as base image names
@@ -12,7 +13,6 @@ It streamlines the process of creating a custom image for Cloud Pak for Data run
 3. push each custom image to a target container registry
 4. register a custom image with the corresponding Cloud Pak for Data service
 
-*The support for Watson Machine Learning is not fully implemented but should be there soon. Stay tunned!*
 
 **Doc**: https://ibm.github.io/CPD-Custom-Image-CLI/
 

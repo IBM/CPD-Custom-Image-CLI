@@ -82,7 +82,7 @@ python cli_ws_image.py custom register --jupyter-all -py 3.8 -v 4.0.6 --dry-run
 python cli_ws_image.py custom register --jupyter-all -r ws-applications-408-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.0.8 -v 4.0.8 --dry-run
 python cli_ws_image.py custom register --gpu --jupyter-all -r ws-applications-408-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.0.8 -v 4.0.8 --dry-run
 
-python cli_ws_image.py custom register --rstudio -r custom-407-{filename} -d "{display_name} (custom)" -i us.icr.io/custom-image-ws-applications/{image_name}-custom:16 -v 4.0.7 --dry-run
+python cli_ws_image.py custom register --service wml --storage-volume cpd-instance::cc-home-pvc-sv -s runtime22.1-py3.9 -ss custom-452-software-spec-{image_name}.json -r custom-452-{filename} -d "{display_name} (custom)" -i us.icr.io/cpd-custom-image/{image_name}-custom:4.5.2 -v 4.5.2 --dry-run
 ```
 
 ## 4. Other commnds
@@ -99,7 +99,7 @@ python cli_ws_image.py custom view --name ws-applications-408-jupyter-lab-py39-s
 python cli_ws_image.py custom view --name ws-applications-jupyter-py39-server.json # it actually works for default config too
 ```
 
-### 4.3 list packages available to be installed using microdnf
+### 4.3 list packages available to be installed using microdnf from rpmfind
 ```bash
 # list only the channels
 python cli_ws_image.py pkg list --channel-only
