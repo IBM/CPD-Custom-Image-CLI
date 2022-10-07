@@ -273,8 +273,8 @@ def build(dir_dockerfile, base_image_list, custom_image_name_pattern, docker_bui
     with open(base_image_list) as f:
         l_base_image = [base_image.replace('\n','') for base_image in f.readlines()]
 
-    os.chdir(dir_dockerfile)
-    print('Changed working directory to',dir_dockerfile)
+    #os.chdir(dir_dockerfile)
+    #print('Changed working directory to',dir_dockerfile)
 
     for base_image in l_base_image:
         if '@' in base_image:
@@ -286,6 +286,9 @@ def build(dir_dockerfile, base_image_list, custom_image_name_pattern, docker_bui
         image_name_custom = custom_image_name_pattern.format(image_name=image_name)
         print(f'Building custom image {image_name_custom} based on {image_name}')
         
+        print(f'pwd')
+        res = subprocess.run('pwd',shell=True)
+
         cmd = f'docker build {dir_dockerfile} --build-arg base_image_tag={base_image} -t {image_name_custom} {docker_build_args}'
         print(f'Executing command: {cmd}')
         res = subprocess.run(cmd,shell=True)
