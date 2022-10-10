@@ -1,19 +1,8 @@
 # specify if not in watson studio
 
-# 4.0.8
-export BASE_URL=https://daell-wmla.datascienceelite.com
-export USERNAME=wendy
-export APIKEY=WJKeGpPnutFy8WKT90qXcEAS6lFzJsK5yfPYKCK1
-
-# 4.0.6
-export BASE_URL=https://dse-cpd401-cluster2.cpolab.ibm.com
-export USERNAME=wanting.wang@ibm.com
-export APIKEY=sjTLmovdGwmovTLmX5as56DCKbP96vlRFCVq2Iw3
-
-# 4.5.1
-export BASE_URL=https://cpd-zen.huntsman-cpd-5503b7023f4d77e626639ae4fbca8106-0000.us-south.containers.appdomain.cloud
-export USERNAME=wanting.wang@ibm.com
-export APIKEY=pkNMZskvz3cUM3RaNWf2PPhJ8SxajilNPtu8Vyqy
+export BASE_URL=https://*****
+export USERNAME=
+export APIKEY=
 
 ## latest cpd version
 python cli_ws_image.py default list --cpu
