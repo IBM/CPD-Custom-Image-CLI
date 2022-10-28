@@ -2,3 +2,4 @@ click
 tabula-py
 lxml
 requests
+future

@@ -4,6 +4,7 @@
 Avoid using list() to convert a python object to a list because we re-defined list().
 If needed, use list_builtin() instead.
 """
+from __future__ import print_function
 
 import click
 import sys
