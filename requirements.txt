@@ -1,2 +1,4 @@
 click
 tabula-py
+lxml
+requests
