@@ -304,8 +304,10 @@ def build(dir_dockerfile, base_image_list, custom_image_name_pattern, docker_bui
 
                 cmd = f'docker push {registry_url}/{registry_namespace}/{image_name_custom} {docker_push_args}'
                 print(f'Executing command: {cmd}')
-                subprocess.run(cmd,shell=True)
-                print(f'Finished pushing custom image as {registry_url}/{registry_namespace}/{image_name_custom}')
+                res = subprocess.run(cmd,shell=True)
+
+                if res.returncode != 0:
+                    print(f'Finished pushing custom image as {registry_url}/{registry_namespace}/{image_name_custom}')
 
 
 @custom.command()
