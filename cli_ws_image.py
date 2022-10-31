@@ -414,6 +414,10 @@ def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,
     if framework is not None and framework not in frameworks:
         click.echo(f"{color('Error','error')}: The value for argument {color('framework','error')} should be one of {frameworks}.")
         sys.exit(1)
+
+    if cpd_version is None:
+        cpd_version = CPD_VERSION_LATEST
+        click.echo(f"{color('Warning')}: The value for argument {color('cpd-version')} is not provided. Set to default value {color(CPD_VERSION_LATEST)}.")
     
     if not cpd_version.startswith('4.5.') and not cpd_version.startswith('4.0.'):
         click.echo(f"{color('Error','error')}: {color('cpd-version','error')} should be either on 4.5 or 4.0 (e.g., 4.5.2).")
