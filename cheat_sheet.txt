@@ -1,8 +1,8 @@
 # specify if not in watson studio
 
-export BASE_URL=https://*****
-export USERNAME=
-export APIKEY=
+export CPD_BASE_URL=https://*****
+export CPD_USERNAME=
+export CPD_APIKEY=
 
 ## latest cpd version
 python cli_ws_image.py default list --cpu
