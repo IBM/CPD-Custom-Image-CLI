@@ -32,8 +32,8 @@ python cli_ws_image.py default list -a --cpd-version 4.0.6
 
 
 ## list custom configs
-python cli_ws_image.py custom list -c ws-applications-408-{filename}
-python cli_ws_image.py custom list -c ws-applications-408-{filename} -v 4.0.6
+python cli_ws_image.py custom list -r ws-applications-408-{filename}
+python cli_ws_image.py custom list -r ws-applications-408-{filename} -v 4.0.6
 
 ## view custom configs
 python cli_ws_image.py custom view --name ws-applications-408-jupyter-lab-py39-server.json
@@ -59,11 +59,11 @@ python cli_ws_image.py custom register --jupyterlab --dry-run
 python cli_ws_image.py custom register --jupyter-all --dry-run
 python cli_ws_image.py custom register --jupyter-all -py 3.8 -v 4.0.6 --dry-run
 
-python cli_ws_image.py custom register --jupyter-all -c ws-applications-408-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.0.8 -v 4.0.8 --dry-run
-python cli_ws_image.py custom register --cpu --jupyter-all -c ws-applications-451-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.5.1 -v 4.5.1 --dry-run
+python cli_ws_image.py custom register --jupyter-all -r ws-applications-408-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.0.8 -v 4.0.8 --dry-run
+python cli_ws_image.py custom register --cpu --jupyter-all -r ws-applications-451-{filename} -d "{display_name} (ws applications)" -i us.icr.io/custom-image-ws-applications/{image_name}-ws-applications:4.5.1 -v 4.5.1 --dry-run
 
-python cli_ws_image.py custom register --rstudio -c custom-407-{filename} -d "{display_name} (custom)" -i us.icr.io/cpd-custom-image/{image_name}-custom:4.0.7 -v 4.0.7 --dry-run
+python cli_ws_image.py custom register --rstudio -r custom-407-{filename} -d "{display_name} (custom)" -i us.icr.io/cpd-custom-image/{image_name}-custom:4.0.7 -v 4.0.7 --dry-run
 
-python cli_ws_image.py custom register --rstudio -c custom-408-{filename} -d "{display_name} (custom)" -i us.icr.io/custom-image-ws-applications/{image_name}-custom:23 -v 4.0.8 --dry-run
+python cli_ws_image.py custom register --rstudio -r custom-408-{filename} -d "{display_name} (custom)" -i us.icr.io/custom-image-ws-applications/{image_name}-custom:23 -v 4.0.8 --dry-run
 
-python cli_ws_image.py custom register --service wml -c custom-408-{filename} -d "{display_name} (custom)" -i us.icr.io/cpd-custom-image/{image_name}-custom:23 -v 4.0.8 --dry-run
+python cli_ws_image.py custom register --service wml -r custom-408-{filename} -d "{display_name} (custom)" -i us.icr.io/cpd-custom-image/{image_name}-custom:23 -v 4.0.8 --dry-run
