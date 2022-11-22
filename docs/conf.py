@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'custom-image-cli'
-copyright = '2022, Wendy Wang'
+copyright = '2022, IBM'
 author = 'Wendy Wang'
 release = '1.0'
 
