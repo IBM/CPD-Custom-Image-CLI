@@ -428,7 +428,20 @@ def register(gpu,jupyter,jupyterlab,jupyter_all,rstudio,python_version,
             click.echo(f"{color('Error','error')}: Service {color('wml','error')} supports python cpu environments for online & batch deployments (which yield a REST API), where only CPU inference is allowed. As a result you cannot specify flags such as \"--gpu\" or \"--rstudio\". \nIf you intend to run GPU inference through a notebook/script job deployment in WML space, the underlying environments and all the steps are the same as WS environments, as in this case WML space leverages WS runtimes, so please use \"--service ws\" instead.")
             sys.exit(1)
         
+        try:
+            from cpd_sdk_plus import storage_volume_utils as sv
+        except:
+            click.echo(f"Installing dependency {color('cpd-sdk-plus')}... trying without flag --user...")
+            res = subprocess.run('pip install https://github.com/IBM/CPD-SDK-Plus-Python/raw/main/dist/cpd_sdk_plus-1.1.tar.gz',shell=True)
+            if res.returncode != 0:
+                click.echo(f"Failed, trying with flag --user...")
+                res = subprocess.run('pip install https://github.com/IBM/CPD-SDK-Plus-Python/raw/main/dist/cpd_sdk_plus-1.1.tar.gz --user',shell=True)
+                if res.returncode != 0:
+                    click.echo(f"{color('Error','error')}: Installation of package cpd-sdk-plus failed. Please do it manually. The package can be found here: {color('https://github.com/IBM/CPD-SDK-Plus-Python/tree/main/dist')}")
+                    sys.exit(1)
+
         from cpd_sdk_plus import storage_volume_utils as sv
+        
         if cpd_version.startswith('4.5.'):
             if '::' not in storage_volume:
                 click.echo(f"{color('Error','error')}: storage volume name {color(storage_volume,'error')} does not have the namespace specified (example name expected: cpd-instance::cc-home-pvc-sv); check your storage volume name")
